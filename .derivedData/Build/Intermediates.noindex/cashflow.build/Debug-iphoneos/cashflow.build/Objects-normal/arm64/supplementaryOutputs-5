@@ -1,0 +1,23 @@
+{
+  "/Volumes/Data/Projects/cashflow/cashflow/Services/ReportExportService.swift" : {
+    "const-values" : "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/Objects-normal/arm64/ReportExportService.swiftconstvalues",
+    "dependencies" : "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/Objects-normal/arm64/ReportExportService.d",
+    "diagnostics" : "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/Objects-normal/arm64/ReportExportService.dia",
+    "object" : "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/Objects-normal/arm64/ReportExportService.o",
+    "swift-dependencies" : "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/Objects-normal/arm64/ReportExportService.swiftdeps"
+  },
+  "/Volumes/Data/Projects/cashflow/cashflow/Services/TransactionBalanceService.swift" : {
+    "const-values" : "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/Objects-normal/arm64/TransactionBalanceService.swiftconstvalues",
+    "dependencies" : "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/Objects-normal/arm64/TransactionBalanceService.d",
+    "diagnostics" : "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/Objects-normal/arm64/TransactionBalanceService.dia",
+    "object" : "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/Objects-normal/arm64/TransactionBalanceService.o",
+    "swift-dependencies" : "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/Objects-normal/arm64/TransactionBalanceService.swiftdeps"
+  },
+  "/Volumes/Data/Projects/cashflow/cashflow/ViewModels/BookDetailViewModel.swift" : {
+    "const-values" : "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/Objects-normal/arm64/BookDetailViewModel.swiftconstvalues",
+    "dependencies" : "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/Objects-normal/arm64/BookDetailViewModel.d",
+    "diagnostics" : "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/Objects-normal/arm64/BookDetailViewModel.dia",
+    "object" : "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/Objects-normal/arm64/BookDetailViewModel.o",
+    "swift-dependencies" : "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/Objects-normal/arm64/BookDetailViewModel.swiftdeps"
+  }
+}

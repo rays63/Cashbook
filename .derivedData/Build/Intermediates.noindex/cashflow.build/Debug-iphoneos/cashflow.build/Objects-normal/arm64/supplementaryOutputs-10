@@ -1,0 +1,23 @@
+{
+  "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/DerivedSources/CoreDataGenerated/cashflow/TransactionLog+CoreDataClass.swift" : {
+    "const-values" : "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/Objects-normal/arm64/TransactionLog+CoreDataClass.swiftconstvalues",
+    "dependencies" : "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/Objects-normal/arm64/TransactionLog+CoreDataClass.d",
+    "diagnostics" : "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/Objects-normal/arm64/TransactionLog+CoreDataClass.dia",
+    "object" : "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/Objects-normal/arm64/TransactionLog+CoreDataClass.o",
+    "swift-dependencies" : "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/Objects-normal/arm64/TransactionLog+CoreDataClass.swiftdeps"
+  },
+  "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/DerivedSources/CoreDataGenerated/cashflow/cashflow+CoreDataModel.swift" : {
+    "const-values" : "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/Objects-normal/arm64/cashflow+CoreDataModel.swiftconstvalues",
+    "dependencies" : "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/Objects-normal/arm64/cashflow+CoreDataModel.d",
+    "diagnostics" : "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/Objects-normal/arm64/cashflow+CoreDataModel.dia",
+    "object" : "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/Objects-normal/arm64/cashflow+CoreDataModel.o",
+    "swift-dependencies" : "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/Objects-normal/arm64/cashflow+CoreDataModel.swiftdeps"
+  },
+  "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "const-values" : "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftconstvalues",
+    "dependencies" : "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/Objects-normal/arm64/GeneratedAssetSymbols.d",
+    "diagnostics" : "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/Objects-normal/arm64/GeneratedAssetSymbols.dia",
+    "object" : "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "swift-dependencies" : "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftdeps"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "source": "/Volumes/Data/Projects/cashflow/cashflow/Components/SummaryCardView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Summary",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 11
+        }
+      },
+      {
+        "comment": "",
+        "key": "View Report",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 22
+        }
+      }
+    ]
+  },
+  "version": 1
+}

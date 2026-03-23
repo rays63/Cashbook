@@ -1,0 +1,88 @@
+{
+  "source": "/Volumes/Data/Projects/cashflow/cashflow/Views/Books/BooksHomeView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "CashBook Pro",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 57
+        }
+      },
+      {
+        "comment": "",
+        "key": "Search books",
+        "location": {
+          "startingColumn": 62,
+          "startingLine": 58
+        }
+      },
+      {
+        "comment": "",
+        "key": "Something went wrong",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 101
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add New Book",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 22
+        }
+      },
+      {
+        "comment": "",
+        "key": "Edit",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 41
+        }
+      },
+      {
+        "comment": "",
+        "key": "Delete",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 46
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sort By",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 62
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sort",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 68
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add Book",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 76
+        }
+      },
+      {
+        "comment": "",
+        "key": "OK",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 105
+        }
+      }
+    ]
+  },
+  "version": 1
+}

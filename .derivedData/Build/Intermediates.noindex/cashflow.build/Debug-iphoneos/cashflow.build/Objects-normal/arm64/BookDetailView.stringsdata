@@ -1,0 +1,48 @@
+{
+  "source": "/Volumes/Data/Projects/cashflow/cashflow/Views/Books/BookDetailView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Something went wrong",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 123
+        }
+      },
+      {
+        "comment": "",
+        "key": "OK",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 130
+        }
+      },
+      {
+        "comment": "",
+        "key": "Edit Book",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 244
+        }
+      },
+      {
+        "comment": "",
+        "key": "Share Report",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 245
+        }
+      },
+      {
+        "comment": "",
+        "key": "Delete Book",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 246
+        }
+      }
+    ]
+  },
+  "version": 1
+}

@@ -1,0 +1,32 @@
+{
+  "source": "/Volumes/Data/Projects/cashflow/cashflow/Views/Reports/ExportSettingsView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Export Settings",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 25
+        }
+      },
+      {
+        "comment": "",
+        "key": "Choose fields to export",
+        "location": {
+          "startingColumn": 21,
+          "startingLine": 8
+        }
+      },
+      {
+        "comment": "",
+        "key": "At least one field stays selected so exported files always remain readable.",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 20
+        }
+      }
+    ]
+  },
+  "version": 1
+}

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="23618" systemVersion="24G81" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
+    <entity name="BookEntity" representedClassName="BookEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="createdAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="id" optional="NO" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="name" optional="NO" attributeType="String"/>
+        <attribute name="ownerName" optional="NO" attributeType="String"/>
+        <attribute name="updatedAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
+        <relationship name="categories" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="CategoryEntity" inverseName="book" inverseEntity="CategoryEntity"/>
+        <relationship name="paymentModes" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="PaymentModeEntity" inverseName="book" inverseEntity="PaymentModeEntity"/>
+        <relationship name="transactions" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="TransactionEntry" inverseName="book" inverseEntity="TransactionEntry"/>
+    </entity>
+    <entity name="CategoryEntity" representedClassName="CategoryEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="colorHex" optional="YES" attributeType="String"/>
+        <attribute name="createdAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="icon" optional="YES" attributeType="String"/>
+        <attribute name="id" optional="NO" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="isSystem" optional="NO" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="name" optional="NO" attributeType="String"/>
+        <attribute name="updatedAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
+        <relationship name="book" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="BookEntity" inverseName="categories" inverseEntity="BookEntity"/>
+        <relationship name="transactions" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="TransactionEntry" inverseName="category" inverseEntity="TransactionEntry"/>
+    </entity>
+    <entity name="PaymentModeEntity" representedClassName="PaymentModeEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="createdAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="icon" optional="YES" attributeType="String"/>
+        <attribute name="id" optional="NO" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="isSystem" optional="NO" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="name" optional="NO" attributeType="String"/>
+        <attribute name="updatedAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
+        <relationship name="book" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="BookEntity" inverseName="paymentModes" inverseEntity="BookEntity"/>
+        <relationship name="transactions" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="TransactionEntry" inverseName="paymentMode" inverseEntity="TransactionEntry"/>
+    </entity>
+    <entity name="TransactionEntry" representedClassName="TransactionEntry" syncable="YES" codeGenerationType="class">
+        <attribute name="amount" optional="NO" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="createdAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="editorName" optional="NO" attributeType="String"/>
+        <attribute name="id" optional="NO" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="notes" optional="YES" attributeType="String"/>
+        <attribute name="occurredAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="runningBalance" optional="NO" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="title" optional="NO" attributeType="String"/>
+        <attribute name="typeRaw" optional="NO" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="updatedAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
+        <relationship name="book" optional="NO" maxCount="1" deletionRule="Nullify" destinationEntity="BookEntity" inverseName="transactions" inverseEntity="BookEntity"/>
+        <relationship name="category" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CategoryEntity" inverseName="transactions" inverseEntity="CategoryEntity"/>
+        <relationship name="logs" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="TransactionLog" inverseName="transaction" inverseEntity="TransactionLog"/>
+        <relationship name="paymentMode" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="PaymentModeEntity" inverseName="transactions" inverseEntity="PaymentModeEntity"/>
+    </entity>
+    <entity name="TransactionLog" representedClassName="TransactionLog" syncable="YES" codeGenerationType="class">
+        <attribute name="action" optional="NO" attributeType="String"/>
+        <attribute name="details" optional="NO" attributeType="String"/>
+        <attribute name="id" optional="NO" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="timestamp" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
+        <relationship name="transaction" optional="NO" maxCount="1" deletionRule="Nullify" destinationEntity="TransactionEntry" inverseName="logs" inverseEntity="TransactionEntry"/>
+    </entity>
+    <elements>
+        <element name="BookEntity" positionX="-54" positionY="-126" width="128" height="149"/>
+        <element name="CategoryEntity" positionX="212" positionY="-122" width="128" height="149"/>
+        <element name="PaymentModeEntity" positionX="462" positionY="-122" width="128" height="134"/>
+        <element name="TransactionEntry" positionX="183" positionY="135" width="128" height="209"/>
+        <element name="TransactionLog" positionX="477" positionY="185" width="128" height="104"/>
+    </elements>
+</model>

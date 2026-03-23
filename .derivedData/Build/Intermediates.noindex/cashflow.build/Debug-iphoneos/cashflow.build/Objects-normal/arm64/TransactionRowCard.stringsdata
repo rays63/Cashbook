@@ -1,0 +1,32 @@
+{
+  "source": "/Volumes/Data/Projects/cashflow/cashflow/Components/TransactionRowCard.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "%@%@",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 22
+        }
+      },
+      {
+        "comment": "",
+        "key": "Balance: %@",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 28
+        }
+      },
+      {
+        "comment": "",
+        "key": "Entry by %@ at %@",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 30
+        }
+      }
+    ]
+  },
+  "version": 1
+}

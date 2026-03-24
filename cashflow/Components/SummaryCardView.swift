@@ -7,40 +7,64 @@ struct SummaryCardView: View {
     let action: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Summary")
-                .font(.headline)
-
+        VStack(alignment: .leading, spacing: 20) {
             HStack {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Overview")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(AppTheme.secondaryText)
+                    Text("Book Snapshot")
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(AppTheme.primaryText)
+                }
+                Spacer()
+                Image(systemName: "chart.line.text.clipboard")
+                    .font(.title3)
+                    .foregroundStyle(AppTheme.accent)
+            }
+
+            HStack(alignment: .top, spacing: 16) {
                 metric(title: "Net Balance", value: balance, tint: balance >= 0 ? .green : .red)
-                Spacer()
                 metric(title: "Cash In", value: cashIn, tint: .green)
-                Spacer()
                 metric(title: "Cash Out", value: cashOut, tint: .red)
             }
 
-            Button("View Report", action: action)
-                .buttonStyle(.borderedProminent)
+            Button(action: action) {
+                HStack {
+                    Text("View Report")
+                    Spacer()
+                    Image(systemName: "arrow.right")
+                }
+                .font(.subheadline.weight(.semibold))
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(AppTheme.accent)
         }
-        .padding()
+        .padding(22)
         .background(
             LinearGradient(
-                colors: [Color.blue.opacity(0.18), Color.green.opacity(0.12)],
+                colors: [AppTheme.accentSoft, Color.white.opacity(0.78)],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             ),
-            in: RoundedRectangle(cornerRadius: 24, style: .continuous)
+            in: RoundedRectangle(cornerRadius: 28, style: .continuous)
         )
+        .overlay(
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .stroke(Color.white.opacity(0.8), lineWidth: 1)
+        )
+        .shadow(color: AppTheme.shadow, radius: 18, x: 0, y: 12)
     }
 
     private func metric(title: String, value: Double, tint: Color) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(AppTheme.secondaryText)
             Text(AppFormatters.currencyString(for: value))
-                .font(.subheadline.weight(.semibold))
+                .font(.headline.weight(.semibold))
                 .foregroundStyle(tint)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }

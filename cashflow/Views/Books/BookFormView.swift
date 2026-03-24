@@ -17,13 +17,20 @@ struct BookFormView: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section("Book Details") {
-                    TextField("Book name", text: $name)
-                    TextField("Owner name", text: $ownerName)
+            ZStack {
+                AppBackgroundView()
+
+                Form {
+                    Section("Book Details") {
+                        TextField("Book name", text: $name)
+                        TextField("Owner name", text: $ownerName)
+                    }
+                    .listRowBackground(AppTheme.listRowFill)
                 }
+                .scrollContentBackground(.hidden)
             }
             .navigationTitle(title)
+            .toolbarBackground(.hidden, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }

@@ -1,2 +1,0 @@
-Target dependency graph (1 target)
-Target 'cashflow' in project 'cashflow' (no dependencies)

@@ -4,10 +4,12 @@
 /Volumes/Data/Projects/cashflow/cashflow/Components/FilterBarView.swift
 /Volumes/Data/Projects/cashflow/cashflow/Components/SummaryCardView.swift
 /Volumes/Data/Projects/cashflow/cashflow/Components/TransactionRowCard.swift
+/Volumes/Data/Projects/cashflow/cashflow/Extensions/AppTheme.swift
 /Volumes/Data/Projects/cashflow/cashflow/Extensions/CoreData+Helpers.swift
 /Volumes/Data/Projects/cashflow/cashflow/Extensions/Formatters.swift
 /Volumes/Data/Projects/cashflow/cashflow/Models/AppTypes.swift
 /Volumes/Data/Projects/cashflow/cashflow/Models/CoreDataEntities.swift
+/Volumes/Data/Projects/cashflow/cashflow/Services/AppearanceSettingsStore.swift
 /Volumes/Data/Projects/cashflow/cashflow/Services/ExportSettingsStore.swift
 /Volumes/Data/Projects/cashflow/cashflow/Services/FinanceCatalogService.swift
 /Volumes/Data/Projects/cashflow/cashflow/Services/PersistenceController.swift
@@ -22,6 +24,8 @@
 /Volumes/Data/Projects/cashflow/cashflow/Views/Books/BooksHomeView.swift
 /Volumes/Data/Projects/cashflow/cashflow/Views/Reports/ExportSettingsView.swift
 /Volumes/Data/Projects/cashflow/cashflow/Views/Reports/ReportView.swift
+/Volumes/Data/Projects/cashflow/cashflow/Views/Settings/AppearanceSettingsView.swift
+/Volumes/Data/Projects/cashflow/cashflow/Views/Transactions/CatalogManagerView.swift
 /Volumes/Data/Projects/cashflow/cashflow/Views/Transactions/TransactionDetailView.swift
 /Volumes/Data/Projects/cashflow/cashflow/Views/Transactions/TransactionFormView.swift
 /Volumes/Data/Projects/cashflow/cashflow/cashflowApp.swift

@@ -6,24 +6,24 @@
         "comment": "",
         "key": "%@%@",
         "location": {
-          "startingColumn": 22,
-          "startingLine": 22
-        }
-      },
-      {
-        "comment": "",
-        "key": "Balance: %@",
-        "location": {
-          "startingColumn": 22,
+          "startingColumn": 26,
           "startingLine": 28
         }
       },
       {
         "comment": "",
-        "key": "Entry by %@ at %@",
+        "key": "By %@ • %@",
         "location": {
           "startingColumn": 22,
-          "startingLine": 30
+          "startingLine": 44
+        }
+      },
+      {
+        "comment": "",
+        "key": "Running Balance",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 36
         }
       }
     ]

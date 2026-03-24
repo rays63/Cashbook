@@ -147,17 +147,21 @@ private struct BookDetailContent: View {
     let onDeleteBook: () -> Void
 
     var body: some View {
-        ScrollView { content }
+        ZStack {
+            AppBackgroundView()
+            ScrollView { content }
+        }
             .navigationTitle(viewModel.book.name ?? "Book")
             .navigationBarTitleDisplayMode(.inline)
             .safeAreaInset(edge: .bottom) { bottomBar }
             .toolbar { toolbarContent }
+            .toolbarBackground(.hidden, for: .navigationBar)
     }
 
     private func actionButton(title: String, systemImage: String, tint: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Label(title, systemImage: systemImage)
-                .font(.headline)
+                .font(.headline.weight(.semibold))
                 .frame(maxWidth: .infinity)
         }
         .buttonStyle(.borderedProminent)
@@ -175,6 +179,8 @@ private struct BookDetailContent: View {
                 categoryOptions: viewModel.categoryOptions,
                 paymentModeOptions: viewModel.paymentModeOptions
             )
+
+            headerStrip
 
             SummaryCardView(
                 balance: viewModel.netBalance,
@@ -197,12 +203,33 @@ private struct BookDetailContent: View {
         .padding(.top)
     }
 
+    private var headerStrip: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Filtered Ledger")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(AppTheme.secondaryText)
+                Text("\(viewModel.filteredTransactions.count) entries")
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(AppTheme.primaryText)
+            }
+            Spacer()
+            Image(systemName: "calendar.badge.clock")
+                .font(.title2)
+                .foregroundStyle(AppTheme.accent)
+        }
+        .padding(18)
+        .appCardStyle(cornerRadius: 22)
+        .padding(.horizontal)
+    }
+
     private var transactionsSection: some View {
         LazyVStack(alignment: .leading, spacing: 16) {
             ForEach(viewModel.groupedTransactions, id: \.date) { group in
                 VStack(alignment: .leading, spacing: 12) {
                     Text(AppFormatters.sectionDate.string(from: group.date))
-                        .font(.headline)
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(AppTheme.primaryText)
                         .padding(.horizontal)
 
                     ForEach(group.entries, id: \.objectID) { transaction in
@@ -229,8 +256,10 @@ private struct BookDetailContent: View {
             actionButton(title: "Cash In", systemImage: "arrow.down.circle.fill", tint: .green, action: onCashIn)
             actionButton(title: "Cash Out", systemImage: "arrow.up.circle.fill", tint: .red, action: onCashOut)
         }
-        .padding()
-        .background(.ultraThinMaterial)
+        .padding(.horizontal)
+        .padding(.top, 10)
+        .padding(.bottom, 8)
+        .background(.ultraThinMaterial.opacity(0.95))
     }
 
     @ToolbarContentBuilder

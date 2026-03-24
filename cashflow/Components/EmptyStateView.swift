@@ -9,18 +9,19 @@ struct EmptyStateView: View {
         VStack(spacing: 12) {
             Image(systemName: systemImage)
                 .font(.system(size: 42, weight: .semibold))
-                .foregroundStyle(.tint)
+                .foregroundStyle(AppTheme.accent)
 
             Text(title)
                 .font(.title3.weight(.semibold))
+                .foregroundStyle(AppTheme.primaryText)
 
             Text(message)
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(AppTheme.secondaryText)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
-        .padding(24)
-        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .padding(28)
+        .appCardStyle()
     }
 }

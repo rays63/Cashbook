@@ -1,6 +1,20 @@
 import CoreData
 import Foundation
 
+enum CatalogServiceError: LocalizedError {
+    case emptyName(String)
+    case duplicateName(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .emptyName(let field):
+            "\(field) name cannot be empty."
+        case .duplicateName(let field):
+            "\(field) name already exists."
+        }
+    }
+}
+
 enum FinanceCatalogService {
     static let defaultCategories = ["Sales", "Purchase", "Food", "Fuel", "Utilities", "Salary", "Rent"]
     static let defaultPaymentModes = ["Cash", "Bank", "Card", "UPI"]
@@ -36,6 +50,50 @@ enum FinanceCatalogService {
     }
 
     @discardableResult
+    static func addCategory(named name: String, for book: BookEntity, in context: NSManagedObjectContext) throws -> CategoryEntity {
+        let trimmed = try validatedName(name, field: "Category")
+        guard book.categoriesArray.contains(where: { $0.wrappedName.caseInsensitiveCompare(trimmed) == .orderedSame }) == false else {
+            throw CatalogServiceError.duplicateName("Category")
+        }
+        let category = createCategory(named: trimmed, for: book, in: context, isSystem: false)
+        try context.saveIfNeeded()
+        return category
+    }
+
+    @discardableResult
+    static func addPaymentMode(named name: String, for book: BookEntity, in context: NSManagedObjectContext) throws -> PaymentModeEntity {
+        let trimmed = try validatedName(name, field: "Payment mode")
+        guard book.paymentModesArray.contains(where: { $0.wrappedName.caseInsensitiveCompare(trimmed) == .orderedSame }) == false else {
+            throw CatalogServiceError.duplicateName("Payment mode")
+        }
+        let paymentMode = createPaymentMode(named: trimmed, for: book, in: context, isSystem: false)
+        try context.saveIfNeeded()
+        return paymentMode
+    }
+
+    static func renameCategory(_ category: CategoryEntity, to name: String, in context: NSManagedObjectContext) throws {
+        let trimmed = try validatedName(name, field: "Category")
+        if let book = category.book,
+           book.categoriesArray.contains(where: { $0 != category && $0.wrappedName.caseInsensitiveCompare(trimmed) == .orderedSame }) {
+            throw CatalogServiceError.duplicateName("Category")
+        }
+        category.name = trimmed
+        category.updatedAt = .now
+        try context.saveIfNeeded()
+    }
+
+    static func renamePaymentMode(_ paymentMode: PaymentModeEntity, to name: String, in context: NSManagedObjectContext) throws {
+        let trimmed = try validatedName(name, field: "Payment mode")
+        if let book = paymentMode.book,
+           book.paymentModesArray.contains(where: { $0 != paymentMode && $0.wrappedName.caseInsensitiveCompare(trimmed) == .orderedSame }) {
+            throw CatalogServiceError.duplicateName("Payment mode")
+        }
+        paymentMode.name = trimmed
+        paymentMode.updatedAt = .now
+        try context.saveIfNeeded()
+    }
+
+    @discardableResult
     private static func createCategory(named name: String, for book: BookEntity, in context: NSManagedObjectContext, isSystem: Bool) -> CategoryEntity {
         let category = CategoryEntity(context: context)
         category.id = UUID()
@@ -57,5 +115,13 @@ enum FinanceCatalogService {
         paymentMode.isSystem = isSystem
         paymentMode.book = book
         return paymentMode
+    }
+
+    private static func validatedName(_ name: String, field: String) throws -> String {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.isEmpty == false else {
+            throw CatalogServiceError.emptyName(field)
+        }
+        return trimmed
     }
 }

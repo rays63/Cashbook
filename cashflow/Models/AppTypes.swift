@@ -99,3 +99,29 @@ struct TransactionDraft {
         Double(amountText.replacingOccurrences(of: ",", with: ""))
     }
 }
+
+enum CatalogKind {
+    case category
+    case paymentMode
+
+    var title: String {
+        switch self {
+        case .category: "Categories"
+        case .paymentMode: "Payment Modes"
+        }
+    }
+
+    var singularTitle: String {
+        switch self {
+        case .category: "Category"
+        case .paymentMode: "Payment Mode"
+        }
+    }
+
+    var editOptionTitle: String {
+        switch self {
+        case .category: "Edit Categories"
+        case .paymentMode: "Edit Payment Modes"
+        }
+    }
+}

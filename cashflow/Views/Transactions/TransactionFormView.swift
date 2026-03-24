@@ -2,11 +2,18 @@ import SwiftUI
 
 struct TransactionFormView: View {
     @Environment(\.dismiss) private var dismiss
+    @ObservedObject var book: BookEntity
     @State private var draft: TransactionDraft
+    @State private var isShowingCategoryManager = false
+    @State private var isShowingPaymentModeManager = false
 
-    let book: BookEntity
     let title: String
     let onSave: (TransactionDraft) -> Bool
+
+    private let emptyCategoryTag = "__none_category__"
+    private let emptyPaymentTag = "__none_payment__"
+    private let editCategoryTag = "__edit_category__"
+    private let editPaymentTag = "__edit_payment__"
 
     init(book: BookEntity, initialDraft: TransactionDraft, title: String, onSave: @escaping (TransactionDraft) -> Bool) {
         self.book = book
@@ -31,14 +38,23 @@ struct TransactionFormView: View {
                     TextField("Amount", text: $draft.amountText)
                         .keyboardType(.decimalPad)
                     TextField("Title", text: $draft.title)
-                    TextField("Category", text: $draft.categoryName)
-                    if book.categoriesArray.isEmpty == false {
-                        categoryChips(names: book.categoriesArray.map(\.wrappedName), binding: $draft.categoryName)
+                    Picker("Category", selection: categorySelectionBinding) {
+                        Text("Select Category").tag(emptyCategoryTag)
+                        ForEach(book.categoriesArray.map(\.wrappedName), id: \.self) { name in
+                            Text(name).tag(name)
+                        }
+                        Text(CatalogKind.category.editOptionTitle).tag(editCategoryTag)
                     }
-                    TextField("Payment Mode", text: $draft.paymentModeName)
-                    if book.paymentModesArray.isEmpty == false {
-                        categoryChips(names: book.paymentModesArray.map(\.wrappedName), binding: $draft.paymentModeName)
+                    .pickerStyle(.menu)
+
+                    Picker("Payment Mode", selection: paymentModeSelectionBinding) {
+                        Text("Select Payment Mode").tag(emptyPaymentTag)
+                        ForEach(book.paymentModesArray.map(\.wrappedName), id: \.self) { name in
+                            Text(name).tag(name)
+                        }
+                        Text(CatalogKind.paymentMode.editOptionTitle).tag(editPaymentTag)
                     }
+                    .pickerStyle(.menu)
                     DatePicker("Date & Time", selection: $draft.occurredAt)
                 }
 
@@ -62,19 +78,45 @@ struct TransactionFormView: View {
                 }
             }
         }
+        .sheet(isPresented: $isShowingCategoryManager) {
+            CatalogManagerView(book: book, kind: .category) { selectedName in
+                draft.categoryName = selectedName
+            }
+        }
+        .sheet(isPresented: $isShowingPaymentModeManager) {
+            CatalogManagerView(book: book, kind: .paymentMode) { selectedName in
+                draft.paymentModeName = selectedName
+            }
+        }
     }
 
-    private func categoryChips(names: [String], binding: Binding<String>) -> some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack {
-                ForEach(names, id: \.self) { name in
-                    Button(name) {
-                        binding.wrappedValue = name
-                    }
-                    .buttonStyle(.bordered)
+    private var categorySelectionBinding: Binding<String> {
+        Binding(
+            get: { draft.categoryName.isEmpty ? emptyCategoryTag : draft.categoryName },
+            set: { selected in
+                if selected == editCategoryTag {
+                    isShowingCategoryManager = true
+                } else if selected == emptyCategoryTag {
+                    draft.categoryName = ""
+                } else {
+                    draft.categoryName = selected
                 }
             }
-            .padding(.vertical, 4)
-        }
+        )
+    }
+
+    private var paymentModeSelectionBinding: Binding<String> {
+        Binding(
+            get: { draft.paymentModeName.isEmpty ? emptyPaymentTag : draft.paymentModeName },
+            set: { selected in
+                if selected == editPaymentTag {
+                    isShowingPaymentModeManager = true
+                } else if selected == emptyPaymentTag {
+                    draft.paymentModeName = ""
+                } else {
+                    draft.paymentModeName = selected
+                }
+            }
+        )
     }
 }

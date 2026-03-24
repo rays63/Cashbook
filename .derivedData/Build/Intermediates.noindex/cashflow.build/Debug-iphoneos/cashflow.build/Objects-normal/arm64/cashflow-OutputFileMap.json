@@ -376,6 +376,16 @@
     "swift-dependencies" : "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/Objects-normal/arm64/ReportView.swiftdeps",
     "swiftmodule" : "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/Objects-normal/arm64/ReportView~partial.swiftmodule"
   },
+  "/Volumes/Data/Projects/cashflow/cashflow/Views/Transactions/CatalogManagerView.swift" : {
+    "const-values" : "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/Objects-normal/arm64/CatalogManagerView.swiftconstvalues",
+    "dependencies" : "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/Objects-normal/arm64/CatalogManagerView.d",
+    "diagnostics" : "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/Objects-normal/arm64/CatalogManagerView.dia",
+    "index-unit-output-path" : "/cashflow.build/Debug-iphoneos/cashflow.build/Objects-normal/arm64/CatalogManagerView.o",
+    "llvm-bc" : "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/Objects-normal/arm64/CatalogManagerView.bc",
+    "object" : "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/Objects-normal/arm64/CatalogManagerView.o",
+    "swift-dependencies" : "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/Objects-normal/arm64/CatalogManagerView.swiftdeps",
+    "swiftmodule" : "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/Objects-normal/arm64/CatalogManagerView~partial.swiftmodule"
+  },
   "/Volumes/Data/Projects/cashflow/cashflow/Views/Transactions/TransactionDetailView.swift" : {
     "const-values" : "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/Objects-normal/arm64/TransactionDetailView.swiftconstvalues",
     "dependencies" : "/Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/Objects-normal/arm64/TransactionDetailView.d",

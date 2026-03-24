@@ -1,0 +1,40 @@
+# Xcode
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcworkspace/xcuserdata/
+DerivedData/
+.DS_Store
+xcuserdata/
+
+# Xcode - build artifacts
+build/
+*.o
+*.swiftmodule
+*.swiftdoc
+
+# Swift Package Manager
+.swiftpm/
+.build/
+
+# CocoaPods
+Pods/
+Podfile.lock
+
+# Swift specific
+*.swift.backup
+.swiftlint
+
+# IDE
+.vscode/
+.idea/
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+
+# Testing
+*.xctest

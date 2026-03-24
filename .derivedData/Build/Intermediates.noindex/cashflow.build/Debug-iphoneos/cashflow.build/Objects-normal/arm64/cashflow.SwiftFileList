@@ -1,5 +1,6 @@
 /Volumes/Data/Projects/cashflow/cashflow/Components/ActivityView.swift
 /Volumes/Data/Projects/cashflow/cashflow/Components/BookRowCard.swift
+/Volumes/Data/Projects/cashflow/cashflow/Components/CashBookMarkView.swift
 /Volumes/Data/Projects/cashflow/cashflow/Components/EmptyStateView.swift
 /Volumes/Data/Projects/cashflow/cashflow/Components/FilterBarView.swift
 /Volumes/Data/Projects/cashflow/cashflow/Components/SummaryCardView.swift
@@ -28,6 +29,7 @@
 /Volumes/Data/Projects/cashflow/cashflow/Views/Transactions/CatalogManagerView.swift
 /Volumes/Data/Projects/cashflow/cashflow/Views/Transactions/TransactionDetailView.swift
 /Volumes/Data/Projects/cashflow/cashflow/Views/Transactions/TransactionFormView.swift
+/Volumes/Data/Projects/cashflow/cashflow/Views/SplashScreenView.swift
 /Volumes/Data/Projects/cashflow/cashflow/cashflowApp.swift
 /Volumes/Data/Projects/cashflow/cashflow/ContentView.swift
 /Volumes/Data/Projects/cashflow/.derivedData/Build/Intermediates.noindex/cashflow.build/Debug-iphoneos/cashflow.build/DerivedSources/CoreDataGenerated/cashflow/BookEntity+CoreDataClass.swift

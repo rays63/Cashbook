@@ -3,6 +3,7 @@
 *.xcodeproj/project.xcworkspace/xcuserdata/
 *.xcworkspace/xcuserdata/
 DerivedData/
+.derivedData/
 .DS_Store
 xcuserdata/
 
@@ -15,6 +16,9 @@ build/
 # Swift Package Manager
 .swiftpm/
 .build/
+
+# Swift module cache
+.swift-module-cache/
 
 # CocoaPods
 Pods/

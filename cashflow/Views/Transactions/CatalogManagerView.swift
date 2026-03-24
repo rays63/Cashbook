@@ -15,28 +15,38 @@ struct CatalogManagerView: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section(kind.title) {
-                    ForEach(items, id: \.objectID) { item in
-                        HStack(spacing: 12) {
-                            TextField(kind.singularTitle, text: binding(for: item))
-                            Button("Save") {
-                                rename(item)
+            ZStack {
+                AppBackgroundView()
+
+                Form {
+                    Section(kind.title) {
+                        ForEach(items, id: \.objectID) { item in
+                            HStack(spacing: 12) {
+                                TextField(kind.singularTitle, text: binding(for: item))
+                                Button("Save") {
+                                    rename(item)
+                                }
+                                .buttonStyle(.bordered)
+                                .tint(AppTheme.accent)
                             }
-                            .buttonStyle(.bordered)
                         }
                     }
-                }
+                    .listRowBackground(AppTheme.listRowFill)
 
-                Section("Add New \(kind.singularTitle)") {
-                    TextField("New \(kind.singularTitle)", text: $newName)
-                    Button("Add") {
-                        addNewItem()
+                    Section("Add New \(kind.singularTitle)") {
+                        TextField("New \(kind.singularTitle)", text: $newName)
+                        Button("Add") {
+                            addNewItem()
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(AppTheme.accent)
                     }
-                    .buttonStyle(.borderedProminent)
+                    .listRowBackground(AppTheme.listRowFill)
                 }
+                .scrollContentBackground(.hidden)
             }
             .navigationTitle(kind.editOptionTitle)
+            .toolbarBackground(.hidden, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Done") { dismiss() }

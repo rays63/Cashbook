@@ -20,10 +20,26 @@
       },
       {
         "comment": "",
+        "key": "Filtered Ledger",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 209
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld entries",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 212
+        }
+      },
+      {
+        "comment": "",
         "key": "Edit Book",
         "location": {
           "startingColumn": 24,
-          "startingLine": 244
+          "startingLine": 273
         }
       },
       {
@@ -31,7 +47,7 @@
         "key": "Share Report",
         "location": {
           "startingColumn": 24,
-          "startingLine": 245
+          "startingLine": 274
         }
       },
       {
@@ -39,7 +55,7 @@
         "key": "Delete Book",
         "location": {
           "startingColumn": 24,
-          "startingLine": 246
+          "startingLine": 275
         }
       }
     ]

@@ -1,5 +1,24 @@
 {
   "source": "/Volumes/Data/Projects/cashflow/cashflow/Components/BookRowCard.swift",
-  "tables": {},
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Balance",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 22
+        }
+      },
+      {
+        "comment": "",
+        "key": "Updated %@",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 37
+        }
+      }
+    ]
+  },
   "version": 1
 }

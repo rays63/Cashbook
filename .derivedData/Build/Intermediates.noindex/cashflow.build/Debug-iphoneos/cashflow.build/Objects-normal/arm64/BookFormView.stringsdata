@@ -6,24 +6,24 @@
         "comment": "",
         "key": "Book Details",
         "location": {
-          "startingColumn": 25,
-          "startingLine": 21
+          "startingColumn": 29,
+          "startingLine": 24
         }
       },
       {
         "comment": "",
         "key": "Book name",
         "location": {
-          "startingColumn": 31,
-          "startingLine": 22
+          "startingColumn": 35,
+          "startingLine": 25
         }
       },
       {
         "comment": "",
         "key": "Owner name",
         "location": {
-          "startingColumn": 31,
-          "startingLine": 23
+          "startingColumn": 35,
+          "startingLine": 26
         }
       },
       {
@@ -31,7 +31,7 @@
         "key": "Cancel",
         "location": {
           "startingColumn": 28,
-          "startingLine": 29
+          "startingLine": 36
         }
       },
       {
@@ -39,7 +39,7 @@
         "key": "Save",
         "location": {
           "startingColumn": 28,
-          "startingLine": 32
+          "startingLine": 39
         }
       }
     ]

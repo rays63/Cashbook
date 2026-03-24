@@ -6,57 +6,73 @@ struct BooksHomeView: View {
     @StateObject private var viewModel = BooksListViewModel()
     @State private var isPresentingBookForm = false
     @State private var editingBook: BookEntity?
+    @State private var isShowingAppearanceSettings = false
 
     var body: some View {
         NavigationStack {
-            Group {
-                if viewModel.filteredBooks.isEmpty {
-                    VStack(spacing: 20) {
-                        EmptyStateView(
-                            title: viewModel.searchText.isEmpty ? "No Books Yet" : "No Matching Books",
-                            message: viewModel.searchText.isEmpty ? "Create your first cash book to start tracking daily income and expenses." : "Try a different search term or sort option.",
-                            systemImage: "books.vertical"
-                        )
+            ZStack {
+                AppBackgroundView()
 
-                        if viewModel.searchText.isEmpty {
-                            Button("Add New Book") {
-                                isPresentingBookForm = true
-                            }
-                            .buttonStyle(.borderedProminent)
-                        }
-                    }
-                    .padding()
-                } else {
-                    List {
-                        ForEach(viewModel.filteredBooks, id: \.objectID) { book in
-                            NavigationLink {
-                                BookDetailView(book: book, deleteAction: {
-                                    viewModel.deleteBook(book)
-                                })
-                            } label: {
-                                BookRowCard(book: book)
-                                    .padding(.vertical, 4)
-                            }
-                            .swipeActions {
-                                Button("Edit") {
-                                    editingBook = book
-                                }
-                                .tint(.blue)
+                Group {
+                    if viewModel.filteredBooks.isEmpty {
+                        VStack(spacing: 20) {
+                            EmptyStateView(
+                                title: viewModel.searchText.isEmpty ? "No Books Yet" : "No Matching Books",
+                                message: viewModel.searchText.isEmpty ? "Create your first cash book to start tracking daily income and expenses." : "Try a different search term or sort option.",
+                                systemImage: "books.vertical"
+                            )
 
-                                Button("Delete", role: .destructive) {
-                                    viewModel.deleteBook(book)
+                            if viewModel.searchText.isEmpty {
+                                Button("Add New Book") {
+                                    isPresentingBookForm = true
                                 }
+                                .buttonStyle(.borderedProminent)
+                                .tint(AppTheme.accent)
                             }
-                            .listRowSeparator(.hidden)
                         }
-                        .onDelete(perform: viewModel.deleteBooks)
+                        .padding()
+                    } else {
+                        List {
+                            Section {
+                                ForEach(viewModel.filteredBooks, id: \.objectID) { book in
+                                    NavigationLink {
+                                        BookDetailView(book: book, deleteAction: {
+                                            viewModel.deleteBook(book)
+                                        })
+                                    } label: {
+                                        BookRowCard(book: book)
+                                            .padding(.vertical, 6)
+                                    }
+                                    .swipeActions {
+                                        Button("Edit") {
+                                            editingBook = book
+                                        }
+                                        .tint(AppTheme.accent)
+
+                                        Button("Delete", role: .destructive) {
+                                            viewModel.deleteBook(book)
+                                        }
+                                    }
+                                    .listRowSeparator(.hidden)
+                                    .listRowBackground(Color.clear)
+                                }
+                                .onDelete(perform: viewModel.deleteBooks)
+                            }
+                        }
+                        .listStyle(.plain)
+                        .scrollContentBackground(.hidden)
+                        .background(Color.clear)
                     }
-                    .listStyle(.plain)
                 }
             }
-            .navigationTitle("CashBook Pro")
             .searchable(text: $viewModel.searchText, prompt: "Search books")
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("CashBook Pro")
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(AppTheme.primaryText)
+                }
+
                 ToolbarItem(placement: .topBarLeading) {
                     Menu {
                         Picker("Sort By", selection: $viewModel.sortOption) {
@@ -69,14 +85,23 @@ struct BooksHomeView: View {
                     }
                 }
 
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItemGroup(placement: .topBarTrailing) {
+                    Button {
+                        isShowingAppearanceSettings = true
+                    } label: {
+                        Image(systemName: "paintbrush")
+                            .foregroundStyle(AppTheme.primaryText)
+                    }
+
                     Button {
                         isPresentingBookForm = true
                     } label: {
-                        Label("Add Book", systemImage: "plus")
+                        Image(systemName: "plus")
+                            .foregroundStyle(AppTheme.primaryText)
                     }
                 }
             }
+            .toolbarBackground(.hidden, for: .navigationBar)
             .task {
                 viewModel.configure(context: context)
             }
@@ -96,6 +121,11 @@ struct BooksHomeView: View {
                     initialOwnerName: book.ownerName ?? "You"
                 ) { name, ownerName in
                     viewModel.updateBook(book, name: name, ownerName: ownerName)
+                }
+            }
+            .sheet(isPresented: $isShowingAppearanceSettings) {
+                NavigationStack {
+                    AppearanceSettingsView()
                 }
             }
             .alert("Something went wrong", isPresented: Binding(

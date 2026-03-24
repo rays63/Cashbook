@@ -4,28 +4,46 @@ struct BookRowCard: View {
     @ObservedObject var book: BookEntity
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text(book.name ?? "Untitled Book")
-                    .font(.headline)
+        VStack(alignment: .leading, spacing: 18) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(book.name ?? "Untitled Book")
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(AppTheme.primaryText)
+
+                    Label(book.ownerName ?? "You", systemImage: "person.crop.circle")
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(AppTheme.secondaryText)
+                }
+
                 Spacer()
-                Text(AppFormatters.currencyString(for: book.balance))
-                    .font(.headline.weight(.semibold))
-                    .foregroundStyle(book.balance >= 0 ? .green : .red)
+
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text("Balance")
+                        .font(.caption)
+                        .foregroundStyle(AppTheme.secondaryText)
+                    Text(AppFormatters.currencyString(for: book.balance))
+                        .font(.headline.weight(.bold))
+                        .foregroundStyle(book.balance >= 0 ? AppTheme.success : AppTheme.danger)
+                }
             }
 
-            HStack(spacing: 12) {
-                Label(book.ownerName ?? "You", systemImage: "person.crop.circle")
+            Divider()
+                .overlay(Color.white.opacity(0.7))
+
+            HStack(spacing: 10) {
+                Image(systemName: "clock")
+                    .foregroundStyle(AppTheme.accent)
+                Text("Updated \(AppFormatters.bookDate.string(from: book.updatedAt ?? .now))")
+                    .foregroundStyle(AppTheme.secondaryText)
                 Spacer()
-                Label(AppFormatters.bookDate.string(from: book.updatedAt ?? .now), systemImage: "clock")
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(AppTheme.secondaryText.opacity(0.8))
             }
-            .font(.caption)
-            .foregroundStyle(.secondary)
+            .font(.caption.weight(.medium))
         }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(uiColor: .secondarySystemBackground))
-        )
+        .padding(20)
+        .appCardStyle()
     }
 }

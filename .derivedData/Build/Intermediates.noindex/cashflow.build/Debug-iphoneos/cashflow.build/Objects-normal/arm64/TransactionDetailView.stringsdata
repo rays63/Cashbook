@@ -7,31 +7,31 @@
         "key": "Entry Details",
         "location": {
           "startingColumn": 26,
-          "startingLine": 44
+          "startingLine": 71
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@%@",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 25
         }
       },
       {
         "comment": "",
         "key": "Overview",
         "location": {
-          "startingColumn": 21,
-          "startingLine": 10
-        }
-      },
-      {
-        "comment": "",
-        "key": "Edit History",
-        "location": {
-          "startingColumn": 21,
-          "startingLine": 24
+          "startingColumn": 26,
+          "startingLine": 43
         }
       },
       {
         "comment": "",
         "key": "No history available",
         "location": {
-          "startingColumn": 26,
-          "startingLine": 26
+          "startingColumn": 30,
+          "startingLine": 48
         }
       },
       {
@@ -39,7 +39,7 @@
         "key": "Edit",
         "location": {
           "startingColumn": 24,
-          "startingLine": 47
+          "startingLine": 75
         }
       },
       {
@@ -47,7 +47,7 @@
         "key": "Delete",
         "location": {
           "startingColumn": 24,
-          "startingLine": 48
+          "startingLine": 76
         }
       }
     ]

@@ -48,7 +48,8 @@ struct FilterBarView: View {
                     Button("Clear") {
                         filter = TransactionFilterState()
                     }
-                    .buttonStyle(.bordered)
+                    .buttonStyle(.borderedProminent)
+                    .tint(AppTheme.accent)
                 }
             }
             .padding(.horizontal)
@@ -56,10 +57,15 @@ struct FilterBarView: View {
     }
 
     private func filterCapsule(title: String) -> some View {
-        Label(title, systemImage: "line.3.horizontal.decrease.circle")
-            .font(.subheadline)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
-            .background(Color(uiColor: .secondarySystemBackground), in: Capsule())
+        HStack(spacing: 8) {
+            Image(systemName: "line.3.horizontal.decrease.circle")
+            Text(title)
+        }
+        .font(.subheadline.weight(.medium))
+        .foregroundStyle(AppTheme.primaryText)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(Color.white.opacity(0.78), in: Capsule())
+        .overlay(Capsule().stroke(Color.white.opacity(0.75), lineWidth: 1))
     }
 }

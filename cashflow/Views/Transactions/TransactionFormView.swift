@@ -24,47 +24,56 @@ struct TransactionFormView: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section("Type") {
-                    Picker("Entry Type", selection: $draft.type) {
-                        ForEach(TransactionKind.allCases) { kind in
-                            Text(kind.title).tag(kind)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                }
+            ZStack {
+                AppBackgroundView()
 
-                Section("Transaction") {
-                    TextField("Amount", text: $draft.amountText)
-                        .keyboardType(.decimalPad)
-                    TextField("Title", text: $draft.title)
-                    Picker("Category", selection: categorySelectionBinding) {
-                        Text("Select Category").tag(emptyCategoryTag)
-                        ForEach(book.categoriesArray.map(\.wrappedName), id: \.self) { name in
-                            Text(name).tag(name)
+                Form {
+                    Section("Type") {
+                        Picker("Entry Type", selection: $draft.type) {
+                            ForEach(TransactionKind.allCases) { kind in
+                                Text(kind.title).tag(kind)
+                            }
                         }
-                        Text(CatalogKind.category.editOptionTitle).tag(editCategoryTag)
+                        .pickerStyle(.segmented)
                     }
-                    .pickerStyle(.menu)
+                    .listRowBackground(AppTheme.listRowFill)
 
-                    Picker("Payment Mode", selection: paymentModeSelectionBinding) {
-                        Text("Select Payment Mode").tag(emptyPaymentTag)
-                        ForEach(book.paymentModesArray.map(\.wrappedName), id: \.self) { name in
-                            Text(name).tag(name)
+                    Section("Transaction") {
+                        TextField("Amount", text: $draft.amountText)
+                            .keyboardType(.decimalPad)
+                        TextField("Title", text: $draft.title)
+                        Picker("Category", selection: categorySelectionBinding) {
+                            Text("Select Category").tag(emptyCategoryTag)
+                            ForEach(book.categoriesArray.map(\.wrappedName), id: \.self) { name in
+                                Text(name).tag(name)
+                            }
+                            Text(CatalogKind.category.editOptionTitle).tag(editCategoryTag)
                         }
-                        Text(CatalogKind.paymentMode.editOptionTitle).tag(editPaymentTag)
-                    }
-                    .pickerStyle(.menu)
-                    DatePicker("Date & Time", selection: $draft.occurredAt)
-                }
+                        .pickerStyle(.menu)
 
-                Section("Notes") {
-                    TextField("Add notes", text: $draft.notes, axis: .vertical)
-                        .lineLimit(3...6)
+                        Picker("Payment Mode", selection: paymentModeSelectionBinding) {
+                            Text("Select Payment Mode").tag(emptyPaymentTag)
+                            ForEach(book.paymentModesArray.map(\.wrappedName), id: \.self) { name in
+                                Text(name).tag(name)
+                            }
+                            Text(CatalogKind.paymentMode.editOptionTitle).tag(editPaymentTag)
+                        }
+                        .pickerStyle(.menu)
+                        DatePicker("Date & Time", selection: $draft.occurredAt)
+                    }
+                    .listRowBackground(AppTheme.listRowFill)
+
+                    Section("Notes") {
+                        TextField("Add notes", text: $draft.notes, axis: .vertical)
+                            .lineLimit(3...6)
+                    }
+                    .listRowBackground(AppTheme.listRowFill)
                 }
+                .scrollContentBackground(.hidden)
             }
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.hidden, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }

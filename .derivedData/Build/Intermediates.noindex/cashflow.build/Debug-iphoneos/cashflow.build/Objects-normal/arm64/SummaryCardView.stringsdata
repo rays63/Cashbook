@@ -4,18 +4,26 @@
     "Localizable": [
       {
         "comment": "",
-        "key": "Summary",
+        "key": "Overview",
         "location": {
-          "startingColumn": 18,
-          "startingLine": 11
+          "startingColumn": 26,
+          "startingLine": 13
+        }
+      },
+      {
+        "comment": "",
+        "key": "Book Snapshot",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 16
         }
       },
       {
         "comment": "",
         "key": "View Report",
         "location": {
-          "startingColumn": 20,
-          "startingLine": 22
+          "startingColumn": 26,
+          "startingLine": 34
         }
       }
     ]

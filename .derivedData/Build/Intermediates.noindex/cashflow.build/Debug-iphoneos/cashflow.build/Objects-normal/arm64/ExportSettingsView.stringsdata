@@ -7,23 +7,23 @@
         "key": "Export Settings",
         "location": {
           "startingColumn": 26,
-          "startingLine": 25
+          "startingLine": 33
         }
       },
       {
         "comment": "",
         "key": "Choose fields to export",
         "location": {
-          "startingColumn": 21,
-          "startingLine": 8
+          "startingColumn": 25,
+          "startingLine": 11
         }
       },
       {
         "comment": "",
         "key": "At least one field stays selected so exported files always remain readable.",
         "location": {
-          "startingColumn": 22,
-          "startingLine": 20
+          "startingColumn": 26,
+          "startingLine": 25
         }
       }
     ]

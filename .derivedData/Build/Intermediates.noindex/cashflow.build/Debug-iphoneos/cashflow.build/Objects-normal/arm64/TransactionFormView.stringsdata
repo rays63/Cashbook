@@ -6,96 +6,96 @@
         "comment": "",
         "key": "Type",
         "location": {
-          "startingColumn": 25,
-          "startingLine": 28
+          "startingColumn": 29,
+          "startingLine": 31
         }
       },
       {
         "comment": "",
         "key": "Transaction",
         "location": {
-          "startingColumn": 25,
-          "startingLine": 37
+          "startingColumn": 29,
+          "startingLine": 41
         }
       },
       {
         "comment": "",
         "key": "Notes",
         "location": {
-          "startingColumn": 25,
-          "startingLine": 61
+          "startingColumn": 29,
+          "startingLine": 66
         }
       },
       {
         "comment": "",
         "key": "Entry Type",
         "location": {
-          "startingColumn": 28,
-          "startingLine": 29
+          "startingColumn": 32,
+          "startingLine": 32
         }
       },
       {
         "comment": "",
         "key": "Amount",
         "location": {
-          "startingColumn": 31,
-          "startingLine": 38
+          "startingColumn": 35,
+          "startingLine": 42
         }
       },
       {
         "comment": "",
         "key": "Title",
         "location": {
-          "startingColumn": 31,
-          "startingLine": 40
+          "startingColumn": 35,
+          "startingLine": 44
         }
       },
       {
         "comment": "",
         "key": "Category",
         "location": {
-          "startingColumn": 28,
-          "startingLine": 41
+          "startingColumn": 32,
+          "startingLine": 45
         }
       },
       {
         "comment": "",
         "key": "Payment Mode",
         "location": {
-          "startingColumn": 28,
-          "startingLine": 50
+          "startingColumn": 32,
+          "startingLine": 54
         }
       },
       {
         "comment": "",
         "key": "Date & Time",
         "location": {
-          "startingColumn": 32,
-          "startingLine": 58
+          "startingColumn": 36,
+          "startingLine": 62
         }
       },
       {
         "comment": "",
         "key": "Select Category",
         "location": {
-          "startingColumn": 30,
-          "startingLine": 42
+          "startingColumn": 34,
+          "startingLine": 46
         }
       },
       {
         "comment": "",
         "key": "Select Payment Mode",
         "location": {
-          "startingColumn": 30,
-          "startingLine": 51
+          "startingColumn": 34,
+          "startingLine": 55
         }
       },
       {
         "comment": "",
         "key": "Add notes",
         "location": {
-          "startingColumn": 31,
-          "startingLine": 62
+          "startingColumn": 35,
+          "startingLine": 67
         }
       },
       {
@@ -103,7 +103,7 @@
         "key": "Cancel",
         "location": {
           "startingColumn": 28,
-          "startingLine": 70
+          "startingLine": 79
         }
       },
       {
@@ -111,7 +111,7 @@
         "key": "Save",
         "location": {
           "startingColumn": 28,
-          "startingLine": 73
+          "startingLine": 82
         }
       }
     ]

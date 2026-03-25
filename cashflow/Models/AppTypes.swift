@@ -1,4 +1,5 @@
 import Foundation
+import CoreData
 
 enum TransactionKind: Int16, CaseIterable, Identifiable {
     case cashIn = 0
@@ -124,4 +125,27 @@ enum CatalogKind {
         case .paymentMode: "Edit Payment Modes"
         }
     }
+}
+
+struct ImportedStatementTransaction: Identifiable {
+    let id = UUID()
+    let occurredAt: Date
+    let description: String
+    let withdrawAmount: Double
+    let depositAmount: Double
+    let balance: Double
+
+    var transactionKind: TransactionKind {
+        depositAmount > 0 ? .cashIn : .cashOut
+    }
+
+    var transactionAmount: Double {
+        depositAmount > 0 ? depositAmount : withdrawAmount
+    }
+}
+
+struct StatementImportPreview {
+    let sourceURL: URL
+    let transactions: [ImportedStatementTransaction]
+    let ignoredLineCount: Int
 }

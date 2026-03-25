@@ -6,6 +6,7 @@ import Foundation
 final class BookDetailViewModel: ObservableObject {
     @Published var filter = TransactionFilterState()
     @Published var errorMessage: String?
+    @Published var importPreview: StatementImportPreview?
 
     let book: BookEntity
     private weak var context: NSManagedObjectContext?
@@ -142,6 +143,56 @@ final class BookDetailViewModel: ObservableObject {
         }
     }
 
+    func preparePDFImport(from url: URL) {
+        do {
+            let preview = try BankStatementPDFImportService.parseStatement(from: url)
+            guard preview.transactions.isEmpty == false else {
+                errorMessage = PDFImportError.noTransactionsFound.localizedDescription
+                return
+            }
+            importPreview = preview
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func commitImportPreview() -> Bool {
+        guard let context, let importPreview else { return false }
+
+        let importedCategory = FinanceCatalogService.findOrCreateCategory(named: "Bank Statement", for: book, in: context)
+        let importedPaymentMode = FinanceCatalogService.findOrCreatePaymentMode(named: "Bank", for: book, in: context)
+        let now = Date()
+
+        for item in importPreview.transactions {
+            let entry = TransactionEntry(context: context)
+            entry.id = UUID()
+            entry.createdAt = now
+            entry.updatedAt = now
+            entry.book = book
+            entry.title = item.description
+            entry.amount = item.transactionAmount
+            entry.transactionKind = item.transactionKind
+            entry.occurredAt = item.occurredAt
+            entry.editorName = book.ownerName
+            entry.notes = "Imported from \(importPreview.sourceURL.lastPathComponent)\nStatement Balance: \(AppFormatters.currencyString(for: item.balance))"
+            entry.category = importedCategory
+            entry.paymentMode = importedPaymentMode
+            createImportLog(for: entry, in: context)
+        }
+
+        TransactionBalanceService.recalculateBalances(for: book)
+
+        do {
+            try context.saveIfNeeded()
+            self.importPreview = nil
+            return true
+        } catch {
+            context.rollback()
+            errorMessage = "Unable to import transactions from the selected PDF."
+            return false
+        }
+    }
+
     func reportSnapshot(for type: ReportType) -> ReportSnapshot {
         switch type {
         case .allEntries:
@@ -220,5 +271,14 @@ final class BookDetailViewModel: ObservableObject {
             log.action = "Created"
             log.details = "Transaction created by \(book.ownerName ?? "You")"
         }
+    }
+
+    private func createImportLog(for transaction: TransactionEntry, in context: NSManagedObjectContext) {
+        let log = TransactionLog(context: context)
+        log.id = UUID()
+        log.timestamp = Date()
+        log.transaction = transaction
+        log.action = "Imported"
+        log.details = "Transaction imported from PDF bank statement."
     }
 }

@@ -14,6 +14,7 @@ struct BookDetailView: View {
     @State private var showingReport = false
     @State private var shareURL: URL?
     @State private var isShowingBookEditor = false
+    @State private var isShowingPDFPicker = false
 
     let deleteAction: () -> Void
 
@@ -48,6 +49,7 @@ struct BookDetailView: View {
                 shareURL = reportViewModel.exportedURL
             },
             onEditBook: { isShowingBookEditor = true },
+            onImportPDF: { isShowingPDFPicker = true },
             onShareReport: {
                 let snapshot = viewModel.reportSnapshot(for: .allEntries)
                 reportViewModel.export(book: viewModel.book, snapshot: snapshot, fields: exportSettings.orderedFields(), asPDF: true)
@@ -120,6 +122,20 @@ struct BookDetailView: View {
                 try? context.saveIfNeeded()
             }
         }
+        .sheet(isPresented: $isShowingPDFPicker) {
+            PDFDocumentPicker { url in
+                viewModel.preparePDFImport(from: url)
+                isShowingPDFPicker = false
+            }
+        }
+        .sheet(item: Binding(
+            get: { viewModel.importPreview.map(ImportPreviewSheetItem.init(preview:)) },
+            set: { _ in viewModel.importPreview = nil }
+        )) { item in
+            PDFImportPreviewView(preview: item.preview) {
+                viewModel.commitImportPreview()
+            }
+        }
         .alert("Something went wrong", isPresented: Binding(
             get: { viewModel.errorMessage != nil || reportViewModel.errorMessage != nil },
             set: { _ in
@@ -143,6 +159,7 @@ private struct BookDetailContent: View {
     let onDeleteTransaction: (TransactionEntry) -> Void
     let onExportPDF: () -> Void
     let onEditBook: () -> Void
+    let onImportPDF: () -> Void
     let onShareReport: () -> Void
     let onDeleteBook: () -> Void
 
@@ -271,6 +288,7 @@ private struct BookDetailContent: View {
 
             Menu {
                 Button("Edit Book", action: onEditBook)
+                Button("Import PDF Statement", action: onImportPDF)
                 Button("Share Report", action: onShareReport)
                 Button("Delete Book", role: .destructive, action: onDeleteBook)
             } label: {
@@ -278,4 +296,9 @@ private struct BookDetailContent: View {
             }
         }
     }
+}
+
+private struct ImportPreviewSheetItem: Identifiable {
+    let id = UUID()
+    let preview: StatementImportPreview
 }

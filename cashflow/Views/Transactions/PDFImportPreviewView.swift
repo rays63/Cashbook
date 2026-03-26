@@ -20,9 +20,14 @@ struct PDFImportPreviewView: View {
                             Text("\(preview.transactions.count) transactions ready to import")
                                 .font(.subheadline)
                                 .foregroundStyle(AppTheme.secondaryText)
-                            Text("\(preview.ignoredLineCount) lines ignored")
+                            Text("\(preview.ignoredLineCount) non-transaction lines skipped")
                                 .font(.caption)
                                 .foregroundStyle(AppTheme.secondaryText)
+                            if preview.duplicateLineCount > 0 {
+                                Text("\(preview.duplicateLineCount) duplicates skipped")
+                                    .font(.caption)
+                                    .foregroundStyle(AppTheme.secondaryText)
+                            }
                         }
                         .padding(.vertical, 6)
                     } header: {
@@ -57,7 +62,7 @@ struct PDFImportPreviewView: View {
                 }
                 .scrollContentBackground(.hidden)
             }
-            .navigationTitle("Import PDF")
+            .navigationTitle("Import Statement")
             .toolbarBackground(.hidden, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

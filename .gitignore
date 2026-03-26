@@ -7,6 +7,7 @@ DerivedData/
 .DS_Store
 xcuserdata/
 .design_review
+node_modules/
 # Xcode - build artifacts
 build/
 *.o

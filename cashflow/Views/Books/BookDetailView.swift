@@ -1,5 +1,6 @@
 import CoreData
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct BookDetailView: View {
     @Environment(\.managedObjectContext) private var context
@@ -15,6 +16,7 @@ struct BookDetailView: View {
     @State private var shareURL: URL?
     @State private var isShowingBookEditor = false
     @State private var isShowingPDFPicker = false
+    @State private var isShowingXLSPicker = false
 
     let deleteAction: () -> Void
     let onBack: (() -> Void)?
@@ -55,6 +57,7 @@ struct BookDetailView: View {
             },
             onEditBook: { isShowingBookEditor = true },
             onImportPDF: { isShowingPDFPicker = true },
+            onImportXLS: { isShowingXLSPicker = true },
             onShareReport: {
                 let snapshot = viewModel.reportSnapshot(for: .allEntries)
                 reportViewModel.export(book: viewModel.book, snapshot: snapshot, fields: exportSettings.orderedFields(), asPDF: true)
@@ -152,6 +155,12 @@ struct BookDetailView: View {
                 isShowingPDFPicker = false
             }
         }
+        .sheet(isPresented: $isShowingXLSPicker) {
+            StatementDocumentPicker(contentTypes: [UTType(filenameExtension: "xls") ?? .data]) { url in
+                viewModel.prepareXLSImport(from: url)
+                isShowingXLSPicker = false
+            }
+        }
         .sheet(item: Binding(
             get: { viewModel.importPreview.map(ImportPreviewSheetItem.init(preview:)) },
             set: { _ in viewModel.importPreview = nil }
@@ -185,6 +194,7 @@ private struct BookDetailContent: View {
     let onExportPDF: () -> Void
     let onEditBook: () -> Void
     let onImportPDF: () -> Void
+    let onImportXLS: () -> Void
     let onShareReport: () -> Void
     let onBack: () -> Void
     let onDeleteBook: () -> Void
@@ -282,6 +292,7 @@ private struct BookDetailContent: View {
                 Menu {
                     Button("Edit Book", action: onEditBook)
                     Button("Import PDF Statement", action: onImportPDF)
+                    Button("Import XLS Statement", action: onImportXLS)
                     Button("Share Report", action: onShareReport)
                     Button("Delete Book", role: .destructive, action: onDeleteBook)
                 } label: {

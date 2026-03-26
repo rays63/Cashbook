@@ -135,6 +135,7 @@ struct ImportedStatementTransaction: Identifiable {
     let withdrawAmount: Double
     let depositAmount: Double
     let balance: Double
+    let externalReference: String?
 
     var transactionKind: TransactionKind {
         depositAmount > 0 ? .cashIn : .cashOut
@@ -149,6 +150,7 @@ struct StatementImportPreview {
     let sourceURL: URL
     let transactions: [ImportedStatementTransaction]
     let ignoredLineCount: Int
+    let duplicateLineCount: Int
 }
 
 enum AppTab: String, CaseIterable, Identifiable {

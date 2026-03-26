@@ -28,7 +28,12 @@ enum BankStatementPDFImportService {
             }
         }
 
-        return StatementImportPreview(sourceURL: url, transactions: parsedTransactions, ignoredLineCount: ignoredLineCount)
+        return StatementImportPreview(
+            sourceURL: url,
+            transactions: parsedTransactions,
+            ignoredLineCount: ignoredLineCount,
+            duplicateLineCount: 0
+        )
     }
 
     static func parseTransactionLine(_ line: String) -> ImportedStatementTransaction? {
@@ -72,7 +77,8 @@ enum BankStatementPDFImportService {
             description: description,
             withdrawAmount: withdrawAmount,
             depositAmount: depositAmount,
-            balance: balance
+            balance: balance,
+            externalReference: nil
         )
     }
 
@@ -201,6 +207,7 @@ enum BankStatementPDFImportService {
 enum PDFImportError: LocalizedError {
     case invalidPDF
     case noTransactionsFound
+    case allTransactionsDuplicate
 
     var errorDescription: String? {
         switch self {
@@ -208,6 +215,8 @@ enum PDFImportError: LocalizedError {
             "The selected file could not be read as a PDF."
         case .noTransactionsFound:
             "No valid transactions were found in the selected PDF."
+        case .allTransactionsDuplicate:
+            "Everything in this statement is already in this book, so there is nothing new to import."
         }
     }
 }

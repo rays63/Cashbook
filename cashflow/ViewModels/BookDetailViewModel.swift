@@ -162,11 +162,30 @@ final class BookDetailViewModel: ObservableObject {
     func preparePDFImport(from url: URL) {
         do {
             let preview = try BankStatementPDFImportService.parseStatement(from: url)
-            guard preview.transactions.isEmpty == false else {
-                errorMessage = PDFImportError.noTransactionsFound.localizedDescription
+            let deduplicatedPreview = removeDuplicateImports(from: preview)
+            guard deduplicatedPreview.transactions.isEmpty == false else {
+                errorMessage = preview.transactions.isEmpty
+                    ? PDFImportError.noTransactionsFound.localizedDescription
+                    : PDFImportError.allTransactionsDuplicate.localizedDescription
                 return
             }
-            importPreview = preview
+            importPreview = deduplicatedPreview
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func prepareXLSImport(from url: URL) {
+        do {
+            let preview = try LegacyXLSStatementImportService.parseStatement(from: url)
+            let deduplicatedPreview = removeDuplicateImports(from: preview)
+            guard deduplicatedPreview.transactions.isEmpty == false else {
+                errorMessage = preview.transactions.isEmpty
+                    ? PDFImportError.noTransactionsFound.localizedDescription
+                    : PDFImportError.allTransactionsDuplicate.localizedDescription
+                return
+            }
+            importPreview = deduplicatedPreview
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -178,6 +197,10 @@ final class BookDetailViewModel: ObservableObject {
         let importedCategory = FinanceCatalogService.findOrCreateCategory(named: "Bank Statement", for: book, in: context)
         let importedPaymentMode = FinanceCatalogService.findOrCreatePaymentMode(named: "Bank", for: book, in: context)
         let now = Date()
+        let existingTitleCounts = Dictionary(grouping: book.transactionArray.map { normalizedImportTitle($0.title ?? "") }, by: { $0 })
+            .mapValues(\.count)
+        let incomingTitleCounts = Dictionary(grouping: importPreview.transactions.map { normalizedImportTitle($0.description) }, by: { $0 })
+            .mapValues(\.count)
 
         for item in importPreview.transactions {
             let entry = TransactionEntry(context: context)
@@ -185,12 +208,34 @@ final class BookDetailViewModel: ObservableObject {
             entry.createdAt = now
             entry.updatedAt = now
             entry.book = book
-            entry.title = item.description
+            let normalizedDescription = normalizedImportTitle(item.description)
+            let normalizedReference = normalizedImportTitle(item.externalReference ?? "")
+            let hasLiteralDescription = normalizedDescription.isEmpty == false && normalizedDescription != normalizedReference
+            let needsReferenceSuffix =
+                item.externalReference?.isEmpty == false &&
+                (incomingTitleCounts[normalizedDescription, default: 0] > 1 ||
+                 existingTitleCounts[normalizedDescription, default: 0] > 0)
+
+            if hasLiteralDescription {
+                if let externalReference = item.externalReference, needsReferenceSuffix {
+                    entry.title = "\(item.description) - \(externalReference)"
+                } else {
+                    entry.title = item.description
+                }
+            } else if let externalReference = item.externalReference, externalReference.isEmpty == false {
+                entry.title = "Statement Entry - \(externalReference)"
+            } else {
+                entry.title = "Statement Entry"
+            }
             entry.amount = item.transactionAmount
             entry.transactionKind = item.transactionKind
             entry.occurredAt = item.occurredAt
             entry.editorName = book.ownerName
-            entry.notes = "Imported from \(importPreview.sourceURL.lastPathComponent)\nStatement Balance: \(AppFormatters.currencyString(for: item.balance))"
+            var notes = "Imported from \(importPreview.sourceURL.lastPathComponent)\nStatement Balance: \(AppFormatters.currencyString(for: item.balance))"
+            if let externalReference = item.externalReference, externalReference.isEmpty == false {
+                notes += "\nReference Code: \(externalReference)"
+            }
+            entry.notes = notes
             entry.category = importedCategory
             entry.paymentMode = importedPaymentMode
             createImportLog(for: entry, in: context)
@@ -204,7 +249,7 @@ final class BookDetailViewModel: ObservableObject {
             return true
         } catch {
             context.rollback()
-            errorMessage = "Unable to import transactions from the selected PDF."
+            errorMessage = "Unable to import transactions from the selected statement."
             return false
         }
     }
@@ -296,6 +341,102 @@ final class BookDetailViewModel: ObservableObject {
         log.timestamp = Date()
         log.transaction = transaction
         log.action = "Imported"
-        log.details = "Transaction imported from PDF bank statement."
+        log.details = "Transaction imported from statement file."
+    }
+
+    private func removeDuplicateImports(from preview: StatementImportPreview) -> StatementImportPreview {
+        let existingSignatures = Set(book.transactionArray.map(transactionSignature(for:)))
+        var seenImportSignatures = Set<String>()
+        var uniqueTransactions: [ImportedStatementTransaction] = []
+        var duplicateCount = 0
+
+        for item in preview.transactions {
+            let signature = importSignature(for: item)
+            if existingSignatures.contains(signature) || seenImportSignatures.contains(signature) {
+                duplicateCount += 1
+                continue
+            }
+
+            seenImportSignatures.insert(signature)
+            uniqueTransactions.append(item)
+        }
+
+        return StatementImportPreview(
+            sourceURL: preview.sourceURL,
+            transactions: uniqueTransactions,
+            ignoredLineCount: preview.ignoredLineCount,
+            duplicateLineCount: duplicateCount
+        )
+    }
+
+    private func transactionSignature(for transaction: TransactionEntry) -> String {
+        let date = normalizedImportDate(transaction.occurredAt ?? .distantPast)
+        let externalReference = importedReferenceCode(for: transaction) ?? "no-reference"
+        let title = normalizedStoredImportTitle(transaction.title ?? "", externalReference: importedReferenceCode(for: transaction))
+        let balance = importedStatementBalance(for: transaction)
+        return "\(date)|\(transaction.transactionKind.rawValue)|\(normalizedAmount(transaction.amount))|\(title)|\(balance.map(normalizedAmount) ?? "no-balance")|\(externalReference)"
+    }
+
+    private func importSignature(for transaction: ImportedStatementTransaction) -> String {
+        let date = normalizedImportDate(transaction.occurredAt)
+        let title = normalizedImportTitle(transaction.description)
+        let externalReference = transaction.externalReference ?? "no-reference"
+        return "\(date)|\(transaction.transactionKind.rawValue)|\(normalizedAmount(transaction.transactionAmount))|\(title)|\(normalizedAmount(transaction.balance))|\(externalReference)"
+    }
+
+    private func normalizedImportDate(_ date: Date) -> String {
+        let startOfDay = Calendar.current.startOfDay(for: date)
+        return ISO8601DateFormatter().string(from: startOfDay)
+    }
+
+    private func normalizedImportTitle(_ title: String) -> String {
+        title
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+            .lowercased()
+    }
+
+    private func normalizedStoredImportTitle(_ title: String, externalReference: String?) -> String {
+        var normalizedTitle = normalizedImportTitle(title)
+        guard let externalReference else { return normalizedTitle }
+
+        let normalizedReference = normalizedImportTitle(externalReference)
+        let suffix = " - \(normalizedReference)"
+        if normalizedTitle.hasSuffix(suffix) {
+            normalizedTitle.removeLast(suffix.count)
+        }
+
+        return normalizedTitle
+    }
+
+    private func normalizedAmount(_ value: Double) -> String {
+        String(format: "%.2f", value)
+    }
+
+    private func importedStatementBalance(for transaction: TransactionEntry) -> Double? {
+        guard let notes = transaction.notes else { return nil }
+        guard let range = notes.range(of: "Statement Balance:", options: .caseInsensitive) else { return nil }
+
+        let rawValue = notes[range.upperBound...]
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .components(separatedBy: .newlines)
+            .first ?? ""
+
+        let cleaned = rawValue
+            .replacingOccurrences(of: ",", with: "")
+            .replacingOccurrences(of: AppFormatters.currency.currencySymbol ?? "", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        return Double(cleaned)
+    }
+
+    private func importedReferenceCode(for transaction: TransactionEntry) -> String? {
+        guard let notes = transaction.notes else { return nil }
+        guard let range = notes.range(of: "Reference Code:", options: .caseInsensitive) else { return nil }
+        let rawValue = notes[range.upperBound...]
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .components(separatedBy: .newlines)
+            .first ?? ""
+        return rawValue.isEmpty ? nil : rawValue
     }
 }

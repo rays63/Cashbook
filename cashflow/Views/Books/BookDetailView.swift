@@ -4,23 +4,25 @@ import SwiftUI
 struct BookDetailView: View {
     @Environment(\.managedObjectContext) private var context
     @EnvironmentObject private var exportSettings: ExportSettingsStore
-    @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel: BookDetailViewModel
     @StateObject private var reportViewModel = ReportViewModel()
 
     @State private var isShowingTransactionForm = false
     @State private var selectedKind: TransactionKind = .cashIn
     @State private var editingTransaction: TransactionEntry?
+    @State private var viewingTransaction: TransactionEntry?
     @State private var showingReport = false
     @State private var shareURL: URL?
     @State private var isShowingBookEditor = false
     @State private var isShowingPDFPicker = false
 
     let deleteAction: () -> Void
+    let onBack: (() -> Void)?
 
-    init(book: BookEntity, deleteAction: @escaping () -> Void) {
+    init(book: BookEntity, deleteAction: @escaping () -> Void, onBack: (() -> Void)? = nil) {
         _viewModel = StateObject(wrappedValue: BookDetailViewModel(book: book))
         self.deleteAction = deleteAction
+        self.onBack = onBack
     }
 
     var body: some View {
@@ -43,6 +45,9 @@ struct BookDetailView: View {
             onDeleteTransaction: { transaction in
                 viewModel.deleteTransaction(transaction)
             },
+            onOpenTransaction: { transaction in
+                viewingTransaction = transaction
+            },
             onExportPDF: {
                 let snapshot = viewModel.reportSnapshot(for: .allEntries)
                 reportViewModel.export(book: viewModel.book, snapshot: snapshot, fields: exportSettings.orderedFields(), asPDF: true)
@@ -55,9 +60,10 @@ struct BookDetailView: View {
                 reportViewModel.export(book: viewModel.book, snapshot: snapshot, fields: exportSettings.orderedFields(), asPDF: true)
                 shareURL = reportViewModel.exportedURL
             },
+            onBack: { onBack?() },
             onDeleteBook: {
                 deleteAction()
-                dismiss()
+                onBack?()
             }
         )
         .task {
@@ -67,7 +73,8 @@ struct BookDetailView: View {
             TransactionFormView(
                 book: viewModel.book,
                 initialDraft: TransactionDraft(type: selectedKind),
-                title: selectedKind.title
+                title: selectedKind.title,
+                goalOptions: viewModel.goalOptions
             ) { draft in
                 let saved = viewModel.saveTransaction(draft: draft, editing: nil)
                 if saved {
@@ -85,10 +92,12 @@ struct BookDetailView: View {
                     title: transaction.title ?? "",
                     categoryName: transaction.category?.wrappedName ?? "",
                     paymentModeName: transaction.paymentMode?.wrappedName ?? "",
+                    goalName: transaction.goal?.wrappedName ?? "",
                     occurredAt: transaction.occurredAt ?? .now,
                     notes: transaction.notes ?? ""
                 ),
-                title: "Edit Transaction"
+                title: "Edit Transaction",
+                goalOptions: viewModel.goalOptions
             ) { draft in
                 if viewModel.saveTransaction(draft: draft, editing: transaction) {
                     editingTransaction = nil
@@ -100,6 +109,21 @@ struct BookDetailView: View {
         .sheet(isPresented: $showingReport) {
             NavigationStack {
                 ReportView(book: viewModel.book, detailViewModel: viewModel)
+            }
+        }
+        .sheet(item: $viewingTransaction) { transaction in
+            NavigationStack {
+                TransactionDetailView(
+                    transaction: transaction,
+                    onEdit: {
+                        viewingTransaction = nil
+                        editingTransaction = transaction
+                    },
+                    onDelete: {
+                        viewModel.deleteTransaction(transaction)
+                        viewingTransaction = nil
+                    }
+                )
             }
         }
         .sheet(isPresented: Binding(
@@ -157,10 +181,12 @@ private struct BookDetailContent: View {
     let onCashOut: () -> Void
     let onEditTransaction: (TransactionEntry) -> Void
     let onDeleteTransaction: (TransactionEntry) -> Void
+    let onOpenTransaction: (TransactionEntry) -> Void
     let onExportPDF: () -> Void
     let onEditBook: () -> Void
     let onImportPDF: () -> Void
     let onShareReport: () -> Void
+    let onBack: () -> Void
     let onDeleteBook: () -> Void
 
     var body: some View {
@@ -168,11 +194,16 @@ private struct BookDetailContent: View {
             AppBackgroundView()
             ScrollView { content }
         }
-            .navigationTitle(viewModel.book.name ?? "Book")
-            .navigationBarTitleDisplayMode(.inline)
-            .safeAreaInset(edge: .bottom) { bottomBar }
-            .toolbar { toolbarContent }
-            .toolbarBackground(.hidden, for: .navigationBar)
+        .safeAreaInset(edge: .bottom) { bottomBar }
+        .gesture(
+            DragGesture(minimumDistance: 20)
+                .onEnded { value in
+                    let isBackSwipe = value.startLocation.x < 40 && value.translation.width > 90 && abs(value.translation.height) < 80
+                    if isBackSwipe {
+                        onBack()
+                    }
+                }
+        )
     }
 
     private func actionButton(title: String, systemImage: String, tint: Color, action: @escaping () -> Void) -> some View {
@@ -188,6 +219,8 @@ private struct BookDetailContent: View {
     @ViewBuilder
     private var content: some View {
         VStack(spacing: 20) {
+            topHeader
+                .padding(.horizontal)
             FilterBarView(
                 filter: Binding(
                     get: { viewModel.filter },
@@ -220,12 +253,47 @@ private struct BookDetailContent: View {
         .padding(.top)
     }
 
-    private var headerStrip: some View {
-        HStack {
+    private var topHeader: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Button {
+                onBack()
+            } label: {
+                headerIcon(systemImage: "chevron.left")
+            }
+            .buttonStyle(.plain)
+
             VStack(alignment: .leading, spacing: 6) {
+                Text(viewModel.book.name ?? "Book")
+                    .font(.title2.weight(.bold))
+                    .foregroundStyle(AppTheme.primaryText)
                 Text("Filtered Ledger")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(AppTheme.secondaryText)
+            }
+
+            Spacer()
+
+            HStack(spacing: 10) {
+                Button(action: onExportPDF) {
+                    headerIcon(systemImage: "arrow.down.doc")
+                }
+                .buttonStyle(.plain)
+
+                Menu {
+                    Button("Edit Book", action: onEditBook)
+                    Button("Import PDF Statement", action: onImportPDF)
+                    Button("Share Report", action: onShareReport)
+                    Button("Delete Book", role: .destructive, action: onDeleteBook)
+                } label: {
+                    headerIcon(systemImage: "ellipsis")
+                }
+            }
+        }
+    }
+
+    private var headerStrip: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 6) {
                 Text("\(viewModel.filteredTransactions.count) entries")
                     .font(.title3.weight(.semibold))
                     .foregroundStyle(AppTheme.primaryText)
@@ -250,12 +318,8 @@ private struct BookDetailContent: View {
                         .padding(.horizontal)
 
                     ForEach(group.entries, id: \.objectID) { transaction in
-                        NavigationLink {
-                            TransactionDetailView(
-                                transaction: transaction,
-                                onEdit: { onEditTransaction(transaction) },
-                                onDelete: { onDeleteTransaction(transaction) }
-                            )
+                        Button {
+                            onOpenTransaction(transaction)
                         } label: {
                             TransactionRowCard(transaction: transaction)
                                 .padding(.horizontal)
@@ -275,26 +339,23 @@ private struct BookDetailContent: View {
         }
         .padding(.horizontal)
         .padding(.top, 10)
-        .padding(.bottom, 8)
+        .padding(.bottom, 10)
         .background(.ultraThinMaterial.opacity(0.95))
     }
 
-    @ToolbarContentBuilder
-    private var toolbarContent: some ToolbarContent {
-        ToolbarItemGroup(placement: .topBarTrailing) {
-            Button(action: onExportPDF) {
-                Image(systemName: "arrow.down.doc")
+    private func headerIcon(systemImage: String) -> some View {
+        RoundedRectangle(cornerRadius: 16, style: .continuous)
+            .fill(AppTheme.cardFill)
+            .frame(width: 46, height: 46)
+            .overlay {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(AppTheme.cardStroke, lineWidth: 1)
             }
-
-            Menu {
-                Button("Edit Book", action: onEditBook)
-                Button("Import PDF Statement", action: onImportPDF)
-                Button("Share Report", action: onShareReport)
-                Button("Delete Book", role: .destructive, action: onDeleteBook)
-            } label: {
-                Image(systemName: "ellipsis.circle")
+            .overlay {
+                Image(systemName: systemImage)
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(AppTheme.primaryText)
             }
-        }
     }
 }
 

@@ -93,6 +93,7 @@ struct TransactionDraft {
     var title: String = ""
     var categoryName: String = ""
     var paymentModeName: String = ""
+    var goalName: String = ""
     var occurredAt: Date = .now
     var notes: String = ""
 
@@ -148,4 +149,48 @@ struct StatementImportPreview {
     let sourceURL: URL
     let transactions: [ImportedStatementTransaction]
     let ignoredLineCount: Int
+}
+
+enum AppTab: String, CaseIterable, Identifiable {
+    case home
+    case calendar
+    case reports
+    case goals
+    case settings
+    case books
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .home: "Home"
+        case .calendar: "Calendar"
+        case .reports: "Reports"
+        case .goals: "Goals"
+        case .settings: "Settings"
+        case .books: "Books"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .home: "house"
+        case .calendar: "calendar"
+        case .reports: "chart.bar"
+        case .goals: "target"
+        case .settings: "gearshape"
+        case .books: "book.closed"
+        }
+    }
+}
+
+struct GoalDraft {
+    var name: String = ""
+    var budgetText: String = ""
+    var hasDeadline = false
+    var deadline: Date = .now
+
+    var budgetValue: Double? {
+        Double(budgetText.replacingOccurrences(of: ",", with: ""))
+    }
 }

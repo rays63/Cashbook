@@ -6,14 +6,37 @@ struct BooksHomeView: View {
     @StateObject private var viewModel = BooksListViewModel()
     @State private var isPresentingBookForm = false
     @State private var editingBook: BookEntity?
-    @State private var isShowingAppearanceSettings = false
+    @State private var selectedBook: BookEntity?
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                AppBackgroundView()
+        ZStack {
+            AppBackgroundView()
 
-                Group {
+            if let selectedBook {
+                BookDetailView(
+                    book: selectedBook,
+                    deleteAction: {
+                        viewModel.deleteBook(selectedBook)
+                        self.selectedBook = nil
+                    },
+                    onBack: {
+                        withAnimation(.easeInOut(duration: 0.22)) {
+                            self.selectedBook = nil
+                        }
+                    }
+                )
+                .transition(.move(edge: .trailing))
+            } else {
+                VStack(spacing: 0) {
+                    header
+                        .padding(.horizontal, 20)
+                        .padding(.top, 16)
+                        .padding(.bottom, 10)
+
+                    searchBar
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 12)
+
                     if viewModel.filteredBooks.isEmpty {
                         VStack(spacing: 20) {
                             EmptyStateView(
@@ -31,18 +54,20 @@ struct BooksHomeView: View {
                             }
                         }
                         .padding()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                     } else {
                         List {
                             Section {
                                 ForEach(viewModel.filteredBooks, id: \.objectID) { book in
-                                    NavigationLink {
-                                        BookDetailView(book: book, deleteAction: {
-                                            viewModel.deleteBook(book)
-                                        })
+                                    Button {
+                                        withAnimation(.easeInOut(duration: 0.22)) {
+                                            selectedBook = book
+                                        }
                                     } label: {
                                         BookRowCard(book: book)
                                             .padding(.vertical, 6)
                                     }
+                                    .buttonStyle(.plain)
                                     .swipeActions {
                                         Button("Edit") {
                                             editingBook = book
@@ -65,77 +90,103 @@ struct BooksHomeView: View {
                     }
                 }
             }
-            .searchable(text: $viewModel.searchText, prompt: "Search books")
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    Text("CashBook Pro")
-                        .font(.headline.weight(.semibold))
-                        .foregroundStyle(AppTheme.primaryText)
-                }
-
-                ToolbarItem(placement: .topBarLeading) {
-                    Menu {
-                        Picker("Sort By", selection: $viewModel.sortOption) {
-                            ForEach(BookSortOption.allCases) { option in
-                                Text(option.rawValue).tag(option)
-                            }
-                        }
-                    } label: {
-                        Label("Sort", systemImage: "arrow.up.arrow.down.circle")
-                    }
-                }
-
-                ToolbarItemGroup(placement: .topBarTrailing) {
-                    Button {
-                        isShowingAppearanceSettings = true
-                    } label: {
-                        Image(systemName: "paintbrush")
-                            .foregroundStyle(AppTheme.primaryText)
-                    }
-
-                    Button {
-                        isPresentingBookForm = true
-                    } label: {
-                        Image(systemName: "plus")
-                            .foregroundStyle(AppTheme.primaryText)
-                    }
-                }
-            }
-            .toolbarBackground(.hidden, for: .navigationBar)
-            .task {
-                viewModel.configure(context: context)
-            }
-            .sheet(isPresented: $isPresentingBookForm) {
-                BookFormView(
-                    title: "New Book",
-                    initialName: "",
-                    initialOwnerName: "You"
-                ) { name, ownerName in
-                    viewModel.createBook(name: name, ownerName: ownerName)
-                }
-            }
-            .sheet(item: $editingBook) { book in
-                BookFormView(
-                    title: "Edit Book",
-                    initialName: book.name ?? "",
-                    initialOwnerName: book.ownerName ?? "You"
-                ) { name, ownerName in
-                    viewModel.updateBook(book, name: name, ownerName: ownerName)
-                }
-            }
-            .sheet(isPresented: $isShowingAppearanceSettings) {
-                NavigationStack {
-                    AppearanceSettingsView()
-                }
-            }
-            .alert("Something went wrong", isPresented: Binding(
-                get: { viewModel.errorMessage != nil },
-                set: { _ in viewModel.dismissError() }
-            )) {
-                Button("OK", role: .cancel) {}
-            } message: {
-                Text(viewModel.errorMessage ?? "")
+        }
+        .task {
+            viewModel.configure(context: context)
+        }
+        .sheet(isPresented: $isPresentingBookForm) {
+            BookFormView(
+                title: "New Book",
+                initialName: "",
+                initialOwnerName: "You"
+            ) { name, ownerName in
+                viewModel.createBook(name: name, ownerName: ownerName)
             }
         }
+        .sheet(item: $editingBook) { book in
+            BookFormView(
+                title: "Edit Book",
+                initialName: book.name ?? "",
+                initialOwnerName: book.ownerName ?? "You"
+            ) { name, ownerName in
+                viewModel.updateBook(book, name: name, ownerName: ownerName)
+            }
+        }
+        .alert("Something went wrong", isPresented: Binding(
+            get: { viewModel.errorMessage != nil },
+            set: { _ in viewModel.dismissError() }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(viewModel.errorMessage ?? "")
+        }
+    }
+
+    private var header: some View {
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Books")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(AppTheme.secondaryText)
+                Text("Manage your cashbooks")
+                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                    .foregroundStyle(AppTheme.primaryText)
+            }
+
+            Spacer()
+
+            Button {
+                isPresentingBookForm = true
+            } label: {
+                headerIcon(systemImage: "plus")
+            }
+        }
+    }
+
+    private var searchBar: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(AppTheme.secondaryText)
+
+            TextField("Search books", text: $viewModel.searchText)
+                .textInputAutocapitalization(.words)
+                .autocorrectionDisabled()
+                .foregroundStyle(AppTheme.primaryText)
+
+            if viewModel.searchText.isEmpty == false {
+                Button {
+                    viewModel.searchText = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(AppTheme.secondaryText)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(AppTheme.cardFill)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(AppTheme.cardStroke, lineWidth: 1)
+        )
+    }
+
+    private func headerIcon(systemImage: String) -> some View {
+        RoundedRectangle(cornerRadius: 16, style: .continuous)
+            .fill(AppTheme.cardFill)
+            .frame(width: 46, height: 46)
+            .overlay {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(AppTheme.cardStroke, lineWidth: 1)
+            }
+            .overlay {
+                Image(systemName: systemImage)
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(AppTheme.primaryText)
+            }
     }
 }

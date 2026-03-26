@@ -40,6 +40,15 @@ enum PreviewSeeder {
             item.book = book
         }
 
+        let goal = GoalEntity(context: context)
+        goal.id = UUID()
+        goal.name = "Emergency Fund"
+        goal.targetAmount = 5000
+        goal.deadline = now.addingTimeInterval(86_400 * 60)
+        goal.createdAt = now
+        goal.updatedAt = now
+        goal.book = book
+
         let samples: [(String, Double, TransactionKind, String, String, TimeInterval)] = [
             ("Opening Balance", 1200, .cashIn, "Sales", "Cash", -86_400 * 5),
             ("Office Supplies", 180, .cashOut, "Supplies", "Card", -86_400 * 4.5),
@@ -62,6 +71,9 @@ enum PreviewSeeder {
             tx.book = book
             tx.category = book.categoriesArray.first(where: { $0.name == sample.3 })
             tx.paymentMode = book.paymentModesArray.first(where: { $0.name == sample.4 })
+            if sample.2 == .cashIn {
+                tx.goal = goal
+            }
 
             let log = TransactionLog(context: context)
             log.id = UUID()

@@ -84,6 +84,15 @@ final class BookDetailViewModel: ObservableObject {
         ["All"] + book.paymentModesArray.map(\.wrappedName)
     }
 
+    var goalOptions: [String] {
+        guard let context else { return [] }
+        let request = GoalEntity.fetchRequest()
+        let goals = (try? context.fetch(request)) ?? []
+        return goals
+            .sorted { ($0.updatedAt ?? .distantPast) > ($1.updatedAt ?? .distantPast) }
+            .map(\.wrappedName)
+    }
+
     func saveTransaction(draft: TransactionDraft, editing transaction: TransactionEntry?) -> Bool {
         guard let context else { return false }
         guard let amount = draft.amountValue, amount > 0 else {
@@ -116,6 +125,13 @@ final class BookDetailViewModel: ObservableObject {
         entry.notes = draft.notes.trimmingCharacters(in: .whitespacesAndNewlines)
         entry.category = FinanceCatalogService.findOrCreateCategory(named: draft.categoryName, for: book, in: context)
         entry.paymentMode = FinanceCatalogService.findOrCreatePaymentMode(named: draft.paymentModeName, for: book, in: context)
+        if draft.type == .cashIn {
+            let request = GoalEntity.fetchRequest()
+            let goals = (try? context.fetch(request)) ?? []
+            entry.goal = goals.first(where: { $0.wrappedName == draft.goalName })
+        } else {
+            entry.goal = nil
+        }
 
         createLog(for: entry, previousSnapshot: previousSnapshot, in: context)
         TransactionBalanceService.recalculateBalances(for: book)
@@ -247,6 +263,7 @@ final class BookDetailViewModel: ObservableObject {
             "Type": transaction.transactionKind.title,
             "Category": transaction.category?.wrappedName ?? "-",
             "Payment Mode": transaction.paymentMode?.wrappedName ?? "-",
+            "Goal": transaction.goal?.wrappedName ?? "-",
             "Date": AppFormatters.bookDate.string(from: transaction.occurredAt ?? .now),
             "Notes": transaction.notes ?? ""
         ]

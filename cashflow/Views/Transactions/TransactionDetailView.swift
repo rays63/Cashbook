@@ -31,6 +31,9 @@ struct TransactionDetailView: View {
 
                         detailRow("Category", transaction.category?.wrappedName ?? "-")
                         detailRow("Payment Mode", transaction.paymentMode?.wrappedName ?? "-")
+                        if let goalName = transaction.goal?.wrappedName {
+                            detailRow("Goal", goalName)
+                        }
                         detailRow("Date", AppFormatters.bookDate.string(from: transaction.occurredAt ?? .now))
                         detailRow("Balance After Entry", AppFormatters.currencyString(for: transaction.runningBalance))
                         detailRow("Entry By", transaction.editorName ?? "You")

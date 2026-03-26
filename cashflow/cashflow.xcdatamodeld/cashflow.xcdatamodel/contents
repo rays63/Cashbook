@@ -7,6 +7,7 @@
         <attribute name="ownerName" optional="NO" attributeType="String"/>
         <attribute name="updatedAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
         <relationship name="categories" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="CategoryEntity" inverseName="book" inverseEntity="CategoryEntity"/>
+        <relationship name="goals" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="GoalEntity" inverseName="book" inverseEntity="GoalEntity"/>
         <relationship name="paymentModes" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="PaymentModeEntity" inverseName="book" inverseEntity="PaymentModeEntity"/>
         <relationship name="transactions" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="TransactionEntry" inverseName="book" inverseEntity="TransactionEntry"/>
     </entity>
@@ -20,6 +21,16 @@
         <attribute name="updatedAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
         <relationship name="book" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="BookEntity" inverseName="categories" inverseEntity="BookEntity"/>
         <relationship name="transactions" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="TransactionEntry" inverseName="category" inverseEntity="TransactionEntry"/>
+    </entity>
+    <entity name="GoalEntity" representedClassName="GoalEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="createdAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="deadline" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="id" optional="NO" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="name" optional="NO" attributeType="String"/>
+        <attribute name="targetAmount" optional="NO" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="updatedAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
+        <relationship name="book" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="BookEntity" inverseName="goals" inverseEntity="BookEntity"/>
+        <relationship name="transactions" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="TransactionEntry" inverseName="goal" inverseEntity="TransactionEntry"/>
     </entity>
     <entity name="PaymentModeEntity" representedClassName="PaymentModeEntity" syncable="YES" codeGenerationType="class">
         <attribute name="createdAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
@@ -44,6 +55,7 @@
         <attribute name="updatedAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
         <relationship name="book" optional="NO" maxCount="1" deletionRule="Nullify" destinationEntity="BookEntity" inverseName="transactions" inverseEntity="BookEntity"/>
         <relationship name="category" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CategoryEntity" inverseName="transactions" inverseEntity="CategoryEntity"/>
+        <relationship name="goal" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="GoalEntity" inverseName="transactions" inverseEntity="GoalEntity"/>
         <relationship name="logs" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="TransactionLog" inverseName="transaction" inverseEntity="TransactionLog"/>
         <relationship name="paymentMode" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="PaymentModeEntity" inverseName="transactions" inverseEntity="PaymentModeEntity"/>
     </entity>
@@ -57,6 +69,7 @@
     <elements>
         <element name="BookEntity" positionX="-54" positionY="-126" width="128" height="149"/>
         <element name="CategoryEntity" positionX="212" positionY="-122" width="128" height="149"/>
+        <element name="GoalEntity" positionX="717" positionY="-117" width="128" height="149"/>
         <element name="PaymentModeEntity" positionX="462" positionY="-122" width="128" height="134"/>
         <element name="TransactionEntry" positionX="183" positionY="135" width="128" height="209"/>
         <element name="TransactionLog" positionX="477" positionY="185" width="128" height="104"/>

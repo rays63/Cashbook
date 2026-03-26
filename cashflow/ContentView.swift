@@ -5,7 +5,7 @@ struct ContentView: View {
 
     var body: some View {
         ZStack {
-            BooksHomeView()
+            AppShellView()
 
             if isShowingSplash {
                 SplashScreenView()

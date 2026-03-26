@@ -6,7 +6,7 @@ DerivedData/
 .derivedData/
 .DS_Store
 xcuserdata/
-
+.design_review
 # Xcode - build artifacts
 build/
 *.o

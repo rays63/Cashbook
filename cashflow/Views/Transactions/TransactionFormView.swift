@@ -8,6 +8,7 @@ struct TransactionFormView: View {
     @State private var isShowingPaymentModeManager = false
 
     let title: String
+    let goalOptions: [String]
     let onSave: (TransactionDraft) -> Bool
 
     private let emptyCategoryTag = "__none_category__"
@@ -15,9 +16,10 @@ struct TransactionFormView: View {
     private let editCategoryTag = "__edit_category__"
     private let editPaymentTag = "__edit_payment__"
 
-    init(book: BookEntity, initialDraft: TransactionDraft, title: String, onSave: @escaping (TransactionDraft) -> Bool) {
+    init(book: BookEntity, initialDraft: TransactionDraft, title: String, goalOptions: [String] = [], onSave: @escaping (TransactionDraft) -> Bool) {
         self.book = book
         self.title = title
+        self.goalOptions = goalOptions
         self.onSave = onSave
         _draft = State(initialValue: initialDraft)
     }
@@ -59,6 +61,17 @@ struct TransactionFormView: View {
                             Text(CatalogKind.paymentMode.editOptionTitle).tag(editPaymentTag)
                         }
                         .pickerStyle(.menu)
+
+                        if draft.type == .cashIn {
+                            Picker("Goal", selection: goalSelectionBinding) {
+                                Text("No Goal").tag(emptyGoalTag)
+                                ForEach(goalOptions, id: \.self) { name in
+                                    Text(name).tag(name)
+                                }
+                            }
+                            .pickerStyle(.menu)
+                        }
+
                         DatePicker("Date & Time", selection: $draft.occurredAt)
                     }
                     .listRowBackground(AppTheme.listRowFill)
@@ -114,6 +127,8 @@ struct TransactionFormView: View {
         )
     }
 
+    private let emptyGoalTag = "__none_goal__"
+
     private var paymentModeSelectionBinding: Binding<String> {
         Binding(
             get: { draft.paymentModeName.isEmpty ? emptyPaymentTag : draft.paymentModeName },
@@ -125,6 +140,15 @@ struct TransactionFormView: View {
                 } else {
                     draft.paymentModeName = selected
                 }
+            }
+        )
+    }
+
+    private var goalSelectionBinding: Binding<String> {
+        Binding(
+            get: { draft.goalName.isEmpty ? emptyGoalTag : draft.goalName },
+            set: { selected in
+                draft.goalName = selected == emptyGoalTag ? "" : selected
             }
         )
     }

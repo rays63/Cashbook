@@ -17,6 +17,10 @@ struct BookDetailView: View {
     @State private var isShowingBookEditor = false
     @State private var isShowingPDFPicker = false
     @State private var isShowingXLSPicker = false
+    @State private var pendingProtectedPDFURL: URL?
+    @State private var pdfPassword: String = ""
+    @State private var pdfPasswordPromptMessage = "Enter the password to unlock this PDF statement."
+    @State private var isShowingPDFPasswordPrompt = false
 
     let deleteAction: () -> Void
     let onBack: (() -> Void)?
@@ -151,7 +155,7 @@ struct BookDetailView: View {
         }
         .sheet(isPresented: $isShowingPDFPicker) {
             PDFDocumentPicker { url in
-                viewModel.preparePDFImport(from: url)
+                handlePickedPDF(url)
                 isShowingPDFPicker = false
             }
         }
@@ -180,11 +184,67 @@ struct BookDetailView: View {
         } message: {
             Text(viewModel.errorMessage ?? reportViewModel.errorMessage ?? "")
         }
+        .alert("Unlock PDF", isPresented: $isShowingPDFPasswordPrompt) {
+            SecureField("Password", text: $pdfPassword)
+            Button("Cancel", role: .cancel) {
+                pendingProtectedPDFURL = nil
+                pdfPassword = ""
+                pdfPasswordPromptMessage = "Enter the password to unlock this PDF statement."
+            }
+            Button("Open") {
+                retryProtectedPDFImport()
+            }
+        } message: {
+            Text(pdfPasswordPromptMessage)
+        }
+    }
+
+    private func handlePickedPDF(_ url: URL) {
+        switch viewModel.preparePDFImport(from: url) {
+        case .success:
+            pendingProtectedPDFURL = nil
+            pdfPassword = ""
+            pdfPasswordPromptMessage = "Enter the password to unlock this PDF statement."
+        case .passwordRequired:
+            pendingProtectedPDFURL = url
+            pdfPassword = ""
+            pdfPasswordPromptMessage = "Enter the password to unlock this PDF statement."
+            isShowingPDFPasswordPrompt = true
+        case .invalidPassword:
+            pendingProtectedPDFURL = url
+            pdfPassword = ""
+            pdfPasswordPromptMessage = "That password was incorrect. Try again."
+            isShowingPDFPasswordPrompt = true
+        case .failure:
+            break
+        }
+    }
+
+    private func retryProtectedPDFImport() {
+        guard let pendingProtectedPDFURL else { return }
+
+        switch viewModel.preparePDFImport(from: pendingProtectedPDFURL, password: pdfPassword) {
+        case .success:
+            self.pendingProtectedPDFURL = nil
+            self.pdfPassword = ""
+            self.pdfPasswordPromptMessage = "Enter the password to unlock this PDF statement."
+        case .passwordRequired, .invalidPassword:
+            self.pdfPassword = ""
+            self.pdfPasswordPromptMessage = "That password was incorrect. Try again."
+            DispatchQueue.main.async {
+                self.isShowingPDFPasswordPrompt = true
+            }
+        case .failure:
+            self.pendingProtectedPDFURL = nil
+            self.pdfPassword = ""
+        }
     }
 }
 
 private struct BookDetailContent: View {
     @ObservedObject var viewModel: BookDetailViewModel
+    @State private var isSelectionMode = false
+    @State private var selectedTransactionIDs = Set<NSManagedObjectID>()
     let onShowReport: () -> Void
     let onCashIn: () -> Void
     let onCashOut: () -> Void
@@ -245,7 +305,8 @@ private struct BookDetailContent: View {
             SummaryCardView(
                 balance: viewModel.netBalance,
                 cashIn: viewModel.totalCashIn,
-                cashOut: viewModel.totalCashOut
+                cashOut: viewModel.totalCashOut,
+                trendPoints: viewModel.summaryTrendPoints
             ) { onShowReport() }
             .padding(.horizontal)
 
@@ -284,6 +345,23 @@ private struct BookDetailContent: View {
             Spacer()
 
             HStack(spacing: 10) {
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        isSelectionMode.toggle()
+                        if isSelectionMode == false {
+                            selectedTransactionIDs.removeAll()
+                        }
+                    }
+                } label: {
+                    headerIcon(
+                        systemImage: isSelectionMode ? "xmark" : "checklist",
+                        fill: isSelectionMode ? AppTheme.accentSoft : AppTheme.cardFill,
+                        stroke: isSelectionMode ? AppTheme.accent.opacity(0.22) : AppTheme.cardStroke,
+                        foreground: isSelectionMode ? AppTheme.accent : AppTheme.primaryText
+                    )
+                }
+                .buttonStyle(.plain)
+
                 Button(action: onExportPDF) {
                     headerIcon(systemImage: "arrow.down.doc")
                 }
@@ -308,11 +386,27 @@ private struct BookDetailContent: View {
                 Text("\(viewModel.filteredTransactions.count) entries")
                     .font(.title3.weight(.semibold))
                     .foregroundStyle(AppTheme.primaryText)
+                if isSelectionMode {
+                    Text("\(selectedTransactionIDs.count) selected")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(AppTheme.secondaryText)
+                }
             }
             Spacer()
-            Image(systemName: "calendar.badge.clock")
-                .font(.title2)
-                .foregroundStyle(AppTheme.accent)
+            if isSelectionMode, selectedTransactionIDs.isEmpty == false {
+                Button("Delete Selected") {
+                    let selectedTransactions = viewModel.filteredTransactions.filter { selectedTransactionIDs.contains($0.objectID) }
+                    viewModel.deleteTransactions(selectedTransactions)
+                    selectedTransactionIDs.removeAll()
+                    isSelectionMode = false
+                }
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(AppTheme.danger)
+            } else {
+                Image(systemName: "calendar.badge.clock")
+                    .font(.title2)
+                    .foregroundStyle(AppTheme.accent)
+            }
         }
         .padding(18)
         .appCardStyle(cornerRadius: 22)
@@ -330,9 +424,17 @@ private struct BookDetailContent: View {
 
                     ForEach(group.entries, id: \.objectID) { transaction in
                         Button {
-                            onOpenTransaction(transaction)
+                            if isSelectionMode {
+                                toggleSelection(for: transaction)
+                            } else {
+                                onOpenTransaction(transaction)
+                            }
                         } label: {
-                            TransactionRowCard(transaction: transaction)
+                            TransactionRowCard(
+                                transaction: transaction,
+                                isSelectionMode: isSelectionMode,
+                                isSelected: selectedTransactionIDs.contains(transaction.objectID)
+                            )
                                 .padding(.horizontal)
                         }
                         .buttonStyle(.plain)
@@ -345,8 +447,32 @@ private struct BookDetailContent: View {
 
     private var bottomBar: some View {
         HStack(spacing: 16) {
-            actionButton(title: "Cash In", systemImage: "arrow.down.circle.fill", tint: .green, action: onCashIn)
-            actionButton(title: "Cash Out", systemImage: "arrow.up.circle.fill", tint: .red, action: onCashOut)
+            if isSelectionMode {
+                Button("Cancel Selection") {
+                    isSelectionMode = false
+                    selectedTransactionIDs.removeAll()
+                }
+                .font(.headline.weight(.semibold))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(AppTheme.cardFill, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+
+                Button("Delete (\(selectedTransactionIDs.count))") {
+                    let selectedTransactions = viewModel.filteredTransactions.filter { selectedTransactionIDs.contains($0.objectID) }
+                    viewModel.deleteTransactions(selectedTransactions)
+                    selectedTransactionIDs.removeAll()
+                    isSelectionMode = false
+                }
+                .font(.headline.weight(.semibold))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(selectedTransactionIDs.isEmpty ? AppTheme.cardFill : AppTheme.danger, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .foregroundStyle(selectedTransactionIDs.isEmpty ? AppTheme.secondaryText : Color.white)
+                .disabled(selectedTransactionIDs.isEmpty)
+            } else {
+                actionButton(title: "Cash In", systemImage: "arrow.down.circle.fill", tint: .green, action: onCashIn)
+                actionButton(title: "Cash Out", systemImage: "arrow.up.circle.fill", tint: .red, action: onCashOut)
+            }
         }
         .padding(.horizontal)
         .padding(.top, 10)
@@ -354,19 +480,33 @@ private struct BookDetailContent: View {
         .background(.ultraThinMaterial.opacity(0.95))
     }
 
-    private func headerIcon(systemImage: String) -> some View {
+    private func headerIcon(
+        systemImage: String,
+        fill: Color = AppTheme.cardFill,
+        stroke: Color = AppTheme.cardStroke,
+        foreground: Color = AppTheme.primaryText
+    ) -> some View {
         RoundedRectangle(cornerRadius: 16, style: .continuous)
-            .fill(AppTheme.cardFill)
+            .fill(fill)
             .frame(width: 46, height: 46)
             .overlay {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .stroke(AppTheme.cardStroke, lineWidth: 1)
+                    .stroke(stroke, lineWidth: 1)
             }
             .overlay {
                 Image(systemName: systemImage)
                     .font(.headline.weight(.semibold))
-                    .foregroundStyle(AppTheme.primaryText)
+                    .foregroundStyle(foreground)
             }
+    }
+
+    private func toggleSelection(for transaction: TransactionEntry) {
+        let objectID = transaction.objectID
+        if selectedTransactionIDs.contains(objectID) {
+            selectedTransactionIDs.remove(objectID)
+        } else {
+            selectedTransactionIDs.insert(objectID)
+        }
     }
 }
 

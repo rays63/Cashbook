@@ -29,15 +29,23 @@ final class BookDetailViewModel: ObservableObject {
         let calendar = Calendar.current
         return allTransactions
             .filter { entry in
+                let occurredAt = entry.occurredAt ?? .distantPast
                 switch filter.datePreset {
                 case .all:
-                    true
+                    return true
                 case .today:
-                    calendar.isDateInToday(entry.occurredAt ?? .distantPast)
+                    return calendar.isDateInToday(occurredAt)
                 case .last7Days:
-                    (entry.occurredAt ?? .distantPast) >= (calendar.date(byAdding: .day, value: -7, to: .now) ?? .distantPast)
+                    return occurredAt >= (calendar.date(byAdding: .day, value: -7, to: .now) ?? .distantPast)
+                case .last3Months:
+                    return occurredAt >= (calendar.date(byAdding: .month, value: -3, to: .now) ?? .distantPast)
                 case .thisMonth:
-                    calendar.isDate(entry.occurredAt ?? .distantPast, equalTo: .now, toGranularity: .month)
+                    return calendar.isDate(occurredAt, equalTo: .now, toGranularity: .month)
+                case .custom:
+                    guard let start = filter.customStartDate, let end = filter.customEndDate else { return true }
+                    let startOfDay = calendar.startOfDay(for: start)
+                    let endOfDay = calendar.date(byAdding: DateComponents(day: 1, second: -1), to: calendar.startOfDay(for: end)) ?? end
+                    return occurredAt >= startOfDay && occurredAt <= endOfDay
                 }
             }
             .filter { entry in
@@ -75,6 +83,23 @@ final class BookDetailViewModel: ObservableObject {
 
     var netBalance: Double {
         groupedTransactions.first?.entries.first?.runningBalance ?? book.balance
+    }
+
+    var summaryTrendPoints: [Double] {
+        let balances = filteredTransactions
+            .sorted {
+                if $0.occurredAt == $1.occurredAt {
+                    return ($0.createdAt ?? .distantPast) < ($1.createdAt ?? .distantPast)
+                }
+                return ($0.occurredAt ?? .distantPast) < ($1.occurredAt ?? .distantPast)
+            }
+            .map(\.displayBalance)
+
+        if balances.count > 12 {
+            return Array(balances.suffix(12))
+        }
+
+        return balances
     }
 
     var categoryOptions: [String] {
@@ -160,17 +185,46 @@ final class BookDetailViewModel: ObservableObject {
         }
     }
 
-    func preparePDFImport(from url: URL) {
+    func deleteTransactions(_ transactions: [TransactionEntry]) {
+        guard let context, transactions.isEmpty == false else { return }
+
+        for transaction in transactions {
+            context.delete(transaction)
+        }
+        TransactionBalanceService.recalculateBalances(for: book)
+
         do {
-            let preview = try BankStatementPDFImportService.parseStatement(from: url)
+            try context.saveIfNeeded()
+        } catch {
+            context.rollback()
+            errorMessage = "Unable to delete the selected transactions."
+        }
+    }
+
+    @discardableResult
+    func preparePDFImport(from url: URL, password: String? = nil) -> PDFImportPreparationResult {
+        do {
+            let preview = try BankStatementPDFImportService.parseStatement(from: url, password: password)
             let deduplicatedPreview = removeDuplicateImports(from: preview)
             if preview.transactions.isEmpty {
                 errorMessage = PDFImportError.noTransactionsFound.localizedDescription
-                return
+                return .failure
             }
             importPreview = deduplicatedPreview
+            return .success
+        } catch let error as PDFImportError {
+            switch error {
+            case .passwordRequired:
+                return .passwordRequired
+            case .invalidPassword:
+                return .invalidPassword
+            default:
+                errorMessage = error.localizedDescription
+                return .failure
+            }
         } catch {
             errorMessage = error.localizedDescription
+            return .failure
         }
     }
 
@@ -576,15 +630,26 @@ final class BookDetailViewModel: ObservableObject {
         let externalReference = importedReferenceCode(for: transaction) ?? "no-reference"
         let title = normalizedStoredImportTitle(transaction.title ?? "", externalReference: importedReferenceCode(for: transaction))
         let balance = importedStatementBalance(for: transaction)
-        let sequence = importedStatementSequence(for: transaction).map(String.init) ?? "no-sequence"
-        return "\(date)|\(transaction.transactionKind.rawValue)|\(normalizedAmount(transaction.amount))|\(title)|\(balance.map(normalizedAmount) ?? "no-balance")|\(externalReference)|\(sequence)"
+        let uniqueMarker: String
+        if externalReference != "no-reference" {
+            uniqueMarker = "ref:\(externalReference)"
+        } else {
+            uniqueMarker = "seq:\(importedStatementSequence(for: transaction).map(String.init) ?? "no-sequence")"
+        }
+        return "\(date)|\(transaction.transactionKind.rawValue)|\(normalizedAmount(transaction.amount))|\(title)|\(balance.map(normalizedAmount) ?? "no-balance")|\(uniqueMarker)"
     }
 
     private func importSignature(for transaction: ImportedStatementTransaction) -> String {
         let date = normalizedImportDate(transaction.occurredAt)
         let title = normalizedImportTitle(transaction.description)
         let externalReference = transaction.externalReference ?? "no-reference"
-        return "\(date)|\(transaction.transactionKind.rawValue)|\(normalizedAmount(transaction.transactionAmount))|\(title)|\(normalizedAmount(transaction.balance))|\(externalReference)|\(transaction.sequence)"
+        let uniqueMarker: String
+        if externalReference != "no-reference" {
+            uniqueMarker = "ref:\(externalReference)"
+        } else {
+            uniqueMarker = "seq:\(transaction.sequence)"
+        }
+        return "\(date)|\(transaction.transactionKind.rawValue)|\(normalizedAmount(transaction.transactionAmount))|\(title)|\(normalizedAmount(transaction.balance))|\(uniqueMarker)"
     }
 
     private func normalizedImportDate(_ date: Date) -> String {
@@ -670,3 +735,9 @@ private extension TransactionKind {
         }
     }
 }
+    enum PDFImportPreparationResult {
+        case success
+        case passwordRequired
+        case invalidPassword
+        case failure
+    }

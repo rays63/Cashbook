@@ -35,8 +35,12 @@ struct ReportsHubView: View {
                     return calendar.isDateInToday(occurredAt)
                 case .last7Days:
                     return occurredAt >= (calendar.date(byAdding: .day, value: -7, to: .now) ?? .distantPast)
+                case .last3Months:
+                    return occurredAt >= (calendar.date(byAdding: .month, value: -3, to: .now) ?? .distantPast)
                 case .thisMonth:
                     return calendar.isDate(occurredAt, equalTo: .now, toGranularity: .month)
+                case .custom:
+                    return true
                 }
             }
             .sorted { ($0.occurredAt ?? .distantPast) < ($1.occurredAt ?? .distantPast) }
@@ -163,7 +167,7 @@ struct ReportsHubView: View {
                 value: selectedDateFilter.rawValue
             ) {
                 Picker("Period", selection: $selectedDateFilter) {
-                    ForEach(DateRangePreset.allCases) { preset in
+                    ForEach(DateRangePreset.allCases.filter { $0 != .custom }) { preset in
                         Text(preset.rawValue).tag(preset)
                     }
                 }

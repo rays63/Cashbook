@@ -25,6 +25,7 @@ struct BooksHomeView: View {
                         }
                     }
                 )
+                .id(selectedBook.objectID)
                 .transition(.move(edge: .trailing))
             } else {
                 VStack(spacing: 0) {

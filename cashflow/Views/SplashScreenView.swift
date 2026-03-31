@@ -32,7 +32,11 @@ struct SplashScreenView: View {
                     .blur(radius: glow ? 8 : 18)
                     .scaleEffect(glow ? 1.08 : 0.92)
 
-                CashBookMarkView(size: 148, showShadow: false)
+                Image("SplashLogo")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 148, height: 148)
+                    .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
                     .scaleEffect(pulse ? 1.03 : 0.94)
                     .shadow(color: Color(red: 0.44, green: 0.85, blue: 0.28).opacity(glow ? 0.34 : 0.12), radius: glow ? 28 : 10)
                     .shadow(color: Color(red: 0.98, green: 0.78, blue: 0.18).opacity(glow ? 0.16 : 0.04), radius: glow ? 18 : 6)

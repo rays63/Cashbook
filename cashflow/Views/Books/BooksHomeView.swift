@@ -66,7 +66,7 @@ struct BooksHomeView: View {
                                         }
                                     } label: {
                                         BookRowCard(book: book)
-                                            .padding(.vertical, 6)
+                                            .padding(.vertical, 2)
                                     }
                                     .buttonStyle(.plain)
                                     .swipeActions {
@@ -99,18 +99,18 @@ struct BooksHomeView: View {
             BookFormView(
                 title: "New Book",
                 initialName: "",
-                initialOwnerName: "You"
-            ) { name, ownerName in
-                viewModel.createBook(name: name, ownerName: ownerName)
+                initialDescription: ""
+            ) { name, description in
+                viewModel.createBook(name: name, description: description)
             }
         }
         .sheet(item: $editingBook) { book in
             BookFormView(
                 title: "Edit Book",
                 initialName: book.name ?? "",
-                initialOwnerName: book.ownerName ?? "You"
-            ) { name, ownerName in
-                viewModel.updateBook(book, name: name, ownerName: ownerName)
+                initialDescription: book.ownerName ?? ""
+            ) { name, description in
+                viewModel.updateBook(book, name: name, description: description)
             }
         }
         .alert("Something went wrong", isPresented: Binding(

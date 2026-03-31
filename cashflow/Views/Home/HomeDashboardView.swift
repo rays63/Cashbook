@@ -23,7 +23,13 @@ struct HomeDashboardView: View {
 
     private var monthlyTransactions: [TransactionEntry] {
         let calendar = Calendar.current
-        return allTransactions.filter { calendar.isDate($0.occurredAt ?? .distantPast, equalTo: .now, toGranularity: .month) }
+        guard let currentMonthInterval = calendar.dateInterval(of: .month, for: .now) else { return [] }
+
+        return allTransactions.filter { entry in
+            guard let transactionDate = entry.occurredAt else { return false }
+            guard entry.isImportedOpeningBalance == false else { return false }
+            return currentMonthInterval.contains(transactionDate)
+        }
     }
 
     private var monthCashIn: Double {

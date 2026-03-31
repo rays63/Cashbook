@@ -145,10 +145,10 @@ struct BookDetailView: View {
             BookFormView(
                 title: "Edit Book",
                 initialName: viewModel.book.name ?? "",
-                initialOwnerName: viewModel.book.ownerName ?? "You"
-            ) { name, ownerName in
+                initialDescription: viewModel.book.ownerName ?? ""
+            ) { name, description in
                 viewModel.book.name = name
-                viewModel.book.ownerName = ownerName
+                viewModel.book.ownerName = description
                 viewModel.book.updatedAt = .now
                 try? context.saveIfNeeded()
             }

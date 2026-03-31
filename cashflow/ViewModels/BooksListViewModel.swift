@@ -40,20 +40,20 @@ final class BooksListViewModel: ObservableObject {
         }
     }
 
-    func createBook(name: String, ownerName: String) {
+    func createBook(name: String, description: String) {
         guard let context else { return }
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        let trimmedOwner = ownerName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedDescription = description.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        guard trimmedName.isEmpty == false, trimmedOwner.isEmpty == false else {
-            errorMessage = "Book name and owner are required."
+        guard trimmedName.isEmpty == false else {
+            errorMessage = "Book name is required."
             return
         }
 
         let book = BookEntity(context: context)
         book.id = UUID()
         book.name = trimmedName
-        book.ownerName = trimmedOwner
+        book.ownerName = trimmedDescription
         book.createdAt = .now
         book.updatedAt = .now
 
@@ -61,18 +61,18 @@ final class BooksListViewModel: ObservableObject {
         saveContext(context, failure: "Unable to create the book.")
     }
 
-    func updateBook(_ book: BookEntity, name: String, ownerName: String) {
+    func updateBook(_ book: BookEntity, name: String, description: String) {
         guard let context else { return }
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        let trimmedOwner = ownerName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedDescription = description.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        guard trimmedName.isEmpty == false, trimmedOwner.isEmpty == false else {
-            errorMessage = "Book name and owner are required."
+        guard trimmedName.isEmpty == false else {
+            errorMessage = "Book name is required."
             return
         }
 
         book.name = trimmedName
-        book.ownerName = trimmedOwner
+        book.ownerName = trimmedDescription
         book.updatedAt = .now
         saveContext(context, failure: "Unable to update the book.")
     }

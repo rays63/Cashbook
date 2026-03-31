@@ -147,7 +147,7 @@ final class BookDetailViewModel: ObservableObject {
         entry.transactionKind = draft.type
         entry.occurredAt = draft.occurredAt
         entry.updatedAt = now
-        entry.editorName = book.ownerName
+        entry.editorName = "You"
         entry.notes = draft.notes.trimmingCharacters(in: .whitespacesAndNewlines)
         entry.category = FinanceCatalogService.findOrCreateCategory(named: draft.categoryName, for: book, in: context)
         entry.paymentMode = FinanceCatalogService.findOrCreatePaymentMode(named: draft.paymentModeName, for: book, in: context)
@@ -276,7 +276,7 @@ final class BookDetailViewModel: ObservableObject {
             openingEntry.amount = abs(openingBalance)
             openingEntry.transactionKind = openingBalance >= 0 ? .cashIn : .cashOut
             openingEntry.occurredAt = (sortedImportItems.first?.occurredAt ?? .now).addingTimeInterval(-1)
-            openingEntry.editorName = book.ownerName
+            openingEntry.editorName = "You"
             openingEntry.notes = "Imported opening balance from \(importPreview.sourceURL.lastPathComponent)"
             openingEntry.category = importedCategory
             openingEntry.paymentMode = importedPaymentMode
@@ -311,7 +311,7 @@ final class BookDetailViewModel: ObservableObject {
             entry.amount = item.transactionAmount
             entry.transactionKind = item.transactionKind
             entry.occurredAt = item.occurredAt
-            entry.editorName = book.ownerName
+            entry.editorName = "You"
             var notes = "Imported from \(importPreview.sourceURL.lastPathComponent)\nStatement Sequence: \(item.sequence)\nStatement Balance: \(AppFormatters.currencyString(for: item.balance))"
             if let externalReference = item.externalReference, externalReference.isEmpty == false {
                 notes += "\nReference Code: \(externalReference)"
@@ -412,7 +412,7 @@ final class BookDetailViewModel: ObservableObject {
             log.details = changes.isEmpty ? "Transaction updated with no field-level changes detected." : changes.joined(separator: "\n")
         } else {
             log.action = "Created"
-            log.details = "Transaction created by \(book.ownerName ?? "You")"
+            log.details = "Transaction created by You"
         }
     }
 

@@ -72,6 +72,12 @@ extension TransactionEntry {
         transactionKind == .cashIn ? amount : -amount
     }
 
+    var isImportedOpeningBalance: Bool {
+        let normalizedTitle = (title ?? "").trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let normalizedNotes = (notes ?? "").trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        return normalizedTitle == "opening balance" && normalizedNotes.contains("imported opening balance")
+    }
+
     var importedStatementBalance: Double? {
         guard let notes else { return nil }
         guard let range = notes.range(of: "Statement Balance:", options: .caseInsensitive) else { return nil }

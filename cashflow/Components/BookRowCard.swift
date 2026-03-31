@@ -4,16 +4,19 @@ struct BookRowCard: View {
     @ObservedObject var book: BookEntity
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
+        VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(book.name ?? "Untitled Book")
                         .font(.title3.weight(.semibold))
                         .foregroundStyle(AppTheme.primaryText)
 
-                    Label(book.ownerName ?? "You", systemImage: "person.crop.circle")
-                        .font(.caption.weight(.medium))
-                        .foregroundStyle(AppTheme.secondaryText)
+                    if let description = book.ownerName?.trimmingCharacters(in: .whitespacesAndNewlines), description.isEmpty == false {
+                        Text(description)
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(AppTheme.secondaryText)
+                            .lineLimit(2)
+                    }
                 }
 
                 Spacer()
@@ -43,7 +46,7 @@ struct BookRowCard: View {
             }
             .font(.caption.weight(.medium))
         }
-        .padding(20)
+        .padding(18)
         .appCardStyle()
     }
 }

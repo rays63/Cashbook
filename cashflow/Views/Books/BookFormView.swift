@@ -3,16 +3,16 @@ import SwiftUI
 struct BookFormView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var name: String
-    @State private var ownerName: String
+    @State private var description: String
 
     let title: String
     let onSave: (String, String) -> Void
 
-    init(title: String, initialName: String, initialOwnerName: String, onSave: @escaping (String, String) -> Void) {
+    init(title: String, initialName: String, initialDescription: String, onSave: @escaping (String, String) -> Void) {
         self.title = title
         self.onSave = onSave
         _name = State(initialValue: initialName)
-        _ownerName = State(initialValue: initialOwnerName)
+        _description = State(initialValue: initialDescription)
     }
 
     var body: some View {
@@ -23,7 +23,8 @@ struct BookFormView: View {
                 Form {
                     Section("Book Details") {
                         TextField("Book name", text: $name)
-                        TextField("Owner name", text: $ownerName)
+                        TextField("Short description", text: $description, axis: .vertical)
+                            .lineLimit(2...4)
                     }
                     .listRowBackground(AppTheme.listRowFill)
                 }
@@ -37,7 +38,7 @@ struct BookFormView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        onSave(name, ownerName)
+                        onSave(name, description)
                         dismiss()
                     }
                 }

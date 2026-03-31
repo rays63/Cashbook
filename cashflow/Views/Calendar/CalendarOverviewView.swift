@@ -151,7 +151,7 @@ struct CalendarOverviewView: View {
                 )
             } else {
                 ForEach(selectedDayTransactions, id: \.objectID) { transaction in
-                    TransactionRowCard(transaction: transaction)
+                    CalendarTransactionRow(transaction: transaction)
                 }
             }
         }
@@ -231,6 +231,64 @@ struct CalendarOverviewView: View {
 
     private func transactions(on date: Date) -> [TransactionEntry] {
         monthTransactions.filter { calendar.isDate($0.occurredAt ?? .distantPast, inSameDayAs: date) }
+    }
+}
+
+private struct CalendarTransactionRow: View {
+    @ObservedObject var transaction: TransactionEntry
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(transaction.book?.name ?? "Book")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(AppTheme.accent)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(AppTheme.accentSoft, in: Capsule())
+
+                    Text(transaction.category?.wrappedName ?? "General")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(transaction.transactionKind == .cashIn ? AppTheme.success : AppTheme.danger)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background((transaction.transactionKind == .cashIn ? AppTheme.success : AppTheme.danger).opacity(0.12), in: Capsule())
+
+                    Text(transaction.title ?? "Untitled Entry")
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(AppTheme.primaryText)
+                }
+
+                Spacer()
+
+                VStack(alignment: .trailing, spacing: 6) {
+                    Text(transaction.transactionKind.title)
+                        .font(.caption)
+                        .foregroundStyle(AppTheme.secondaryText)
+                    Text("\(transaction.transactionKind.amountPrefix)\(AppFormatters.currencyString(for: transaction.amount))")
+                        .font(.headline.weight(.bold))
+                        .foregroundStyle(transaction.transactionKind == .cashIn ? AppTheme.success : AppTheme.danger)
+                }
+            }
+
+            HStack(alignment: .center) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(transaction.importedStatementBalance != nil ? "Statement Balance" : "Running Balance")
+                        .font(.caption)
+                        .foregroundStyle(AppTheme.secondaryText)
+                    Text(AppFormatters.currencyString(for: transaction.displayBalance))
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(AppTheme.primaryText)
+                }
+                Spacer()
+                Text("By \(transaction.editorName ?? "You") • \(AppFormatters.timeOnly.string(from: transaction.occurredAt ?? .now))")
+                    .font(.caption)
+                    .foregroundStyle(AppTheme.secondaryText)
+            }
+        }
+        .padding(18)
+        .appCardStyle(cornerRadius: 22)
     }
 }
 

@@ -12,6 +12,7 @@ struct GoalsHomeView: View {
 
     @State private var isShowingGoalForm = false
     @State private var editingGoal: GoalEntity?
+    @State private var deletingGoal: GoalEntity?
     @State private var errorMessage: String?
     @State private var searchText = ""
     @State private var selectedFilter: GoalStatusFilter = .active
@@ -93,6 +94,26 @@ struct GoalsHomeView: View {
                 Button("OK", role: .cancel) {}
             } message: {
                 Text(errorMessage ?? "")
+            }
+            .alert("Delete Goal?", isPresented: Binding(
+                get: { deletingGoal != nil },
+                set: { if $0 == false { deletingGoal = nil } }
+            )) {
+                Button("Delete", role: .destructive) {
+                    if let deletingGoal {
+                        do {
+                            try GoalService.deleteGoal(deletingGoal, in: context)
+                            self.deletingGoal = nil
+                        } catch {
+                            errorMessage = "Unable to delete goal."
+                        }
+                    }
+                }
+                Button("Cancel", role: .cancel) {
+                    deletingGoal = nil
+                }
+            } message: {
+                Text("This will permanently remove the selected goal.")
             }
         }
     }
@@ -295,20 +316,37 @@ struct GoalsHomeView: View {
                     .scaleEffect(x: 1, y: 1.35, anchor: .center)
             }
 
-            Button {
-                editingGoal = goal
-            } label: {
-                Label("Edit", systemImage: "square.and.pencil")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(goalAccent(for: goal))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(
-                        goalAccent(for: goal).opacity(0.10),
-                        in: RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    )
+            HStack(spacing: 12) {
+                Button {
+                    editingGoal = goal
+                } label: {
+                    Label("Edit", systemImage: "square.and.pencil")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(goalAccent(for: goal))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(
+                            goalAccent(for: goal).opacity(0.10),
+                            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        )
+                }
+                .buttonStyle(.plain)
+
+                Button {
+                    deletingGoal = goal
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(AppTheme.danger)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(
+                            AppTheme.danger.opacity(0.10),
+                            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        )
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
         }
         .padding(20)
         .background(

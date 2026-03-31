@@ -44,6 +44,11 @@ enum GoalService {
         try context.saveIfNeeded()
     }
 
+    static func deleteGoal(_ goal: GoalEntity, in context: NSManagedObjectContext) throws {
+        context.delete(goal)
+        try context.saveIfNeeded()
+    }
+
     private static func validate(draft: GoalDraft, in context: NSManagedObjectContext, excluding goal: GoalEntity?) throws -> (name: String, budget: Double, deadline: Date?) {
         let trimmedName = draft.name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard trimmedName.isEmpty == false else {

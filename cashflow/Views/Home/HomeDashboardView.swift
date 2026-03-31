@@ -54,6 +54,7 @@ struct HomeDashboardView: View {
                         }
                     }
                 )
+                .id(selectedBook.objectID)
                 .transition(.move(edge: .trailing))
             } else {
                 ScrollView(showsIndicators: false) {

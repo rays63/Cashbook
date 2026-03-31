@@ -10,20 +10,20 @@ struct PDFStatementParserResult {
 
 enum PDFStatementParser {
     static func parse(document: PDFDocument) -> PDFStatementParserResult {
-        let text = (0..<document.pageCount)
+        let pageTexts = (0..<document.pageCount)
             .compactMap { document.page(at: $0)?.string }
-            .joined(separator: "\n")
 
-        let lines = normalizedLines(from: text)
-        let openingBalance = extractBalance(label: "opening balance", from: lines)
-        let closingBalance = extractBalance(label: "closing balance", from: lines)
-        let candidateBlocks = buildTransactionBlocks(from: lines)
+        let allLines = pageTexts.flatMap { normalizedLines(from: $0) }
+        let openingBalance = extractBalance(labels: ["opening balance", "balance from previous statement"], from: allLines)
+        let closingBalance = extractBalance(label: "closing balance", from: allLines)
+        let candidateBlocks = pageTexts.flatMap { buildTransactionBlocks(from: normalizedLines(from: $0)) }
 
         var parsedTransactions: [ImportedStatementTransaction] = []
         var ignoredLineCount = 0
+        var previousBalance = openingBalance
 
         for (index, block) in candidateBlocks.enumerated() {
-            if let transaction = parseTransactionLine(block) {
+            if let transaction = parseTransactionLine(block, previousBalance: previousBalance) {
                 parsedTransactions.append(
                     ImportedStatementTransaction(
                         sequence: index,
@@ -35,6 +35,7 @@ enum PDFStatementParser {
                         externalReference: transaction.externalReference
                     )
                 )
+                previousBalance = transaction.balance
             } else {
                 ignoredLineCount += 1
             }
@@ -55,7 +56,7 @@ enum PDFStatementParser {
             .filter { $0.isEmpty == false }
     }
 
-    static func parseTransactionLine(_ line: String) -> ImportedStatementTransaction? {
+    static func parseTransactionLine(_ line: String, previousBalance: Double? = nil) -> ImportedStatementTransaction? {
         let trimmedLine = line.trimmingCharacters(in: .whitespacesAndNewlines)
         let parsedComponents: (dateString: String, timeString: String?, description: String, withdrawRaw: String, depositRaw: String, balanceRaw: String)?
 
@@ -74,7 +75,7 @@ enum PDFStatementParser {
                 balanceRaw: String(trimmedLine[balanceRange])
             )
         } else {
-            parsedComponents = parseTransactionLineFallback(trimmedLine)
+            parsedComponents = parseTransactionLineFallback(trimmedLine, previousBalance: previousBalance)
         }
 
         guard let parsedComponents else { return nil }
@@ -112,7 +113,7 @@ enum PDFStatementParser {
         )
     }
 
-    private static func parseTransactionLineFallback(_ line: String) -> (dateString: String, timeString: String?, description: String, withdrawRaw: String, depositRaw: String, balanceRaw: String)? {
+    private static func parseTransactionLineFallback(_ line: String, previousBalance: Double? = nil) -> (dateString: String, timeString: String?, description: String, withdrawRaw: String, depositRaw: String, balanceRaw: String)? {
         guard let match = transactionPrefixRegex.firstMatch(in: line, range: NSRange(line.startIndex..., in: line)),
               let dateRange = Range(match.range(at: 1), in: line) else {
             return nil
@@ -127,25 +128,85 @@ enum PDFStatementParser {
             .components(separatedBy: .whitespaces)
             .filter { $0.isEmpty == false }
 
-        guard tokens.count >= 4 else { return nil }
+        guard tokens.count >= 3 else { return nil }
 
-        let trailingTokens = Array(tokens.suffix(3))
-        guard trailingTokens.allSatisfy(isAmountToken(_:)) else {
+        if tokens.count >= 4 {
+            let trailingTokens = Array(tokens.suffix(3))
+            if trailingTokens.allSatisfy(isAmountToken(_:)) {
+                let descriptionTokens = tokens.dropLast(3)
+                let description = descriptionTokens.joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
+                guard description.isEmpty == false else { return nil }
+
+                return (
+                    dateString: dateString,
+                    timeString: timeString,
+                    description: description,
+                    withdrawRaw: trailingTokens[0],
+                    depositRaw: trailingTokens[1],
+                    balanceRaw: trailingTokens[2]
+                )
+            }
+        }
+
+        let trailingTokens = Array(tokens.suffix(2))
+        guard trailingTokens.count == 2,
+              trailingTokens.allSatisfy(isAmountToken(_:)),
+              let amount = parseAmount(trailingTokens[0]),
+              let balance = parseAmount(trailingTokens[1]) else {
             return nil
         }
 
-        let descriptionTokens = tokens.dropLast(3)
+        let descriptionTokens = tokens.dropLast(2)
         let description = descriptionTokens.joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
         guard description.isEmpty == false else { return nil }
 
-        return (
-            dateString: dateString,
-            timeString: timeString,
-            description: description,
-            withdrawRaw: trailingTokens[0],
-            depositRaw: trailingTokens[1],
-            balanceRaw: trailingTokens[2]
-        )
+        if let previousBalance {
+            if amountsApproximatelyEqual(previousBalance - amount, balance) {
+                return (
+                    dateString: dateString,
+                    timeString: timeString,
+                    description: description,
+                    withdrawRaw: trailingTokens[0],
+                    depositRaw: "-",
+                    balanceRaw: trailingTokens[1]
+                )
+            }
+
+            if amountsApproximatelyEqual(previousBalance + amount, balance) {
+                return (
+                    dateString: dateString,
+                    timeString: timeString,
+                    description: description,
+                    withdrawRaw: "-",
+                    depositRaw: trailingTokens[0],
+                    balanceRaw: trailingTokens[1]
+                )
+            }
+        }
+
+        if trailingTokens[0].localizedCaseInsensitiveContains("CR") {
+            return (
+                dateString: dateString,
+                timeString: timeString,
+                description: description,
+                withdrawRaw: "-",
+                depositRaw: trailingTokens[0],
+                balanceRaw: trailingTokens[1]
+            )
+        }
+
+        if trailingTokens[0].localizedCaseInsensitiveContains("DR") {
+            return (
+                dateString: dateString,
+                timeString: timeString,
+                description: description,
+                withdrawRaw: trailingTokens[0],
+                depositRaw: "-",
+                balanceRaw: trailingTokens[1]
+            )
+        }
+
+        return nil
     }
 
     static func buildTransactionBlocks(from lines: [String]) -> [String] {
@@ -163,7 +224,7 @@ enum PDFStatementParser {
                         .replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
                         .trimmingCharacters(in: .whitespacesAndNewlines)
 
-                    if parseTransactionLine(normalizedExistingBlock) != nil {
+                    if hasTransactionShape(normalizedExistingBlock) || isStatementBalanceMarkerLine(normalizedExistingBlock) {
                         blocks.append(existingBlock)
                         currentBlock = line
                     } else {
@@ -193,6 +254,7 @@ enum PDFStatementParser {
         let lowercased = line.lowercased()
 
         if lowercased.hasPrefix("electronic account statement") ||
+            lowercased.hasPrefix("statement of account") ||
             lowercased.hasPrefix("account holder") ||
             lowercased.hasPrefix("account name:") ||
             lowercased.hasPrefix("account number") ||
@@ -201,7 +263,10 @@ enum PDFStatementParser {
             lowercased.hasPrefix("from:") ||
             lowercased.hasPrefix("to date") ||
             lowercased.hasPrefix("from date") ||
+            lowercased.hasPrefix("date statement date") ||
+            lowercased.hasPrefix("statement period") ||
             lowercased.hasPrefix("opening balance") ||
+            lowercased.hasPrefix("balance from previous statement") ||
             lowercased.hasPrefix("closing balance") ||
             lowercased.hasPrefix("accrued interest") ||
             lowercased.hasPrefix("transaction date description") ||
@@ -209,11 +274,39 @@ enum PDFStatementParser {
             lowercased.hasPrefix("report generated on:") ||
             lowercased.hasPrefix("the statement reflects account transaction") ||
             lowercased.hasPrefix("intended to be utilized") ||
-            lowercased.hasPrefix("branch.") {
+            lowercased.hasPrefix("branch.") ||
+            lowercased.hasPrefix("branch :") ||
+            lowercased.hasPrefix("hotline :") ||
+            lowercased.hasPrefix("page of") ||
+            lowercased.hasPrefix("switch to free e-statement service") ||
+            lowercased.hasPrefix("get an easy access to your bank account") ||
+            lowercased.hasPrefix("constant endeavor to keep our records updated") ||
+            lowercased.hasPrefix("any changes to your personal particulars") ||
+            lowercased.hasPrefix("you") {
             return true
         }
 
-        if line.range(of: #"^\d+$"#, options: .regularExpression) != nil {
+        let normalizedHeader = lowercased
+            .replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if normalizedHeader == "date description deposit withdrawal balance" ||
+            normalizedHeader == "date description debit credit balance" ||
+            normalizedHeader == "date description withdrawal deposit balance" {
+            return true
+        }
+
+        if normalizedHeader.range(of: #"^page\s+\d+\s+of\s+\d+$"#, options: [.regularExpression, .caseInsensitive]) != nil {
+            return true
+        }
+
+        if normalizedHeader == "estatement" {
+            return true
+        }
+
+        if line.range(of: #"^\d+$"#, options: .regularExpression) != nil ||
+            line.range(of: #"^\d+\s+\d+$"#, options: .regularExpression) != nil ||
+            line.range(of: #"^\d{2}-\d-\d{6,}-\d{2}\s+\([A-Z]{3}\)$"#, options: .regularExpression) != nil {
             return true
         }
 
@@ -221,9 +314,13 @@ enum PDFStatementParser {
     }
 
     static func extractBalance(label: String, from lines: [String]) -> Double? {
+        extractBalance(labels: [label], from: lines)
+    }
+
+    static func extractBalance(labels: [String], from lines: [String]) -> Double? {
         for line in lines {
             let lowercased = line.lowercased()
-            guard lowercased.contains(label) else { continue }
+            guard labels.contains(where: { lowercased.contains($0) }) else { continue }
 
             let matches = amountRegex.matches(in: line, range: NSRange(line.startIndex..., in: line))
             guard let match = matches.last, let range = Range(match.range, in: line) else { continue }
@@ -234,6 +331,59 @@ enum PDFStatementParser {
         }
 
         return nil
+    }
+
+    static func isStatementBalanceMarkerLine(_ line: String) -> Bool {
+        let lowercased = line.lowercased()
+        guard lowercased.contains("opening balance")
+            || lowercased.contains("balance from previous statement")
+            || lowercased.contains("closing balance") else {
+            return false
+        }
+
+        return extractBalance(
+            labels: ["opening balance", "balance from previous statement", "closing balance"],
+            from: [line]
+        ) != nil
+    }
+
+    static func hasTransactionShape(_ line: String) -> Bool {
+        let trimmedLine = line.trimmingCharacters(in: .whitespacesAndNewlines)
+        if statementLineRegex.firstMatch(in: trimmedLine, range: NSRange(trimmedLine.startIndex..., in: trimmedLine)) != nil {
+            return true
+        }
+
+        guard let match = transactionPrefixRegex.firstMatch(in: trimmedLine, range: NSRange(trimmedLine.startIndex..., in: trimmedLine)),
+              let prefixRange = Range(match.range, in: trimmedLine) else {
+            return false
+        }
+
+        let remainder = String(trimmedLine[prefixRange.upperBound...]).trimmingCharacters(in: .whitespacesAndNewlines)
+        let tokens = remainder
+            .components(separatedBy: .whitespaces)
+            .filter { $0.isEmpty == false }
+
+        if tokens.count >= 4 {
+            let trailingThree = Array(tokens.suffix(3))
+            if trailingThree.allSatisfy(isAmountToken(_:)) {
+                let description = tokens.dropLast(3).joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
+                if description.isEmpty == false {
+                    return true
+                }
+            }
+        }
+
+        if tokens.count >= 3 {
+            let trailingTwo = Array(tokens.suffix(2))
+            if trailingTwo.allSatisfy(isAmountToken(_:)) {
+                let description = tokens.dropLast(2).joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
+                if description.isEmpty == false {
+                    return true
+                }
+            }
+        }
+
+        return false
     }
 
     static func parseAmount(_ value: String) -> Double? {
@@ -308,8 +458,8 @@ enum PDFStatementParser {
     )
 
     private static let transactionStartRegex = try! NSRegularExpression(
-        pattern: #"^\s*(\d{4}-\d{2}-\d{2}|\d{1,2}[/-]\d{1,2}[/-]\d{2,4})\b"#,
-        options: []
+        pattern: #"^\s*(\d{4}-\d{2}-\d{2}|\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{1,2}\s+[A-Za-z]{3}\s+\d{2,4})\b"#,
+        options: [.caseInsensitive]
     )
 
     private static let transactionPrefixRegex = try! NSRegularExpression(
@@ -330,5 +480,9 @@ enum PDFStatementParser {
 
         let pattern = #"^\d[\d,]*(?:\.\d{1,2})?(?:\s?(?:CR|DR))?$"#
         return trimmed.range(of: pattern, options: [.regularExpression, .caseInsensitive]) != nil
+    }
+
+    private static func amountsApproximatelyEqual(_ lhs: Double, _ rhs: Double) -> Bool {
+        abs(lhs - rhs) < 0.01
     }
 }

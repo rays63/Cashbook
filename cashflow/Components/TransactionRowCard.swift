@@ -33,10 +33,10 @@ struct TransactionRowCard: View {
 
             HStack(alignment: .center) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Running Balance")
+                    Text(transaction.importedStatementBalance != nil ? "Statement Balance" : "Running Balance")
                         .font(.caption)
                         .foregroundStyle(AppTheme.secondaryText)
-                    Text(AppFormatters.currencyString(for: transaction.runningBalance))
+                    Text(AppFormatters.currencyString(for: transaction.displayBalance))
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(AppTheme.primaryText)
                 }

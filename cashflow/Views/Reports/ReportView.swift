@@ -26,7 +26,7 @@ struct ReportView: View {
                 .listRowBackground(AppTheme.listRowFill)
 
                 Section("Summary") {
-                    reportMetric("Net Balance", AppFormatters.currencyString(for: snapshot.netBalance))
+                    reportMetric("Remaining Balance", AppFormatters.currencyString(for: snapshot.netBalance))
                     reportMetric("Total Cash In", AppFormatters.currencyString(for: snapshot.totalCashIn))
                     reportMetric("Total Cash Out", AppFormatters.currencyString(for: snapshot.totalCashOut))
                 }

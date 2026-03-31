@@ -60,7 +60,8 @@ final class BookDetailViewModel: ObservableObject {
     var groupedTransactions: [(date: Date, entries: [TransactionEntry])] {
         let groups = Dictionary(grouping: filteredTransactions) { Calendar.current.startOfDay(for: $0.occurredAt ?? .distantPast) }
         return groups.keys.sorted(by: >).map { date in
-            (date, groups[date] ?? [])
+            let entries = orderedEntriesForDisplay(groups[date] ?? [])
+            return (date, entries)
         }
     }
 
@@ -73,7 +74,7 @@ final class BookDetailViewModel: ObservableObject {
     }
 
     var netBalance: Double {
-        totalCashIn - totalCashOut
+        groupedTransactions.first?.entries.first?.runningBalance ?? book.balance
     }
 
     var categoryOptions: [String] {
@@ -163,10 +164,8 @@ final class BookDetailViewModel: ObservableObject {
         do {
             let preview = try BankStatementPDFImportService.parseStatement(from: url)
             let deduplicatedPreview = removeDuplicateImports(from: preview)
-            guard deduplicatedPreview.transactions.isEmpty == false else {
-                errorMessage = preview.transactions.isEmpty
-                    ? PDFImportError.noTransactionsFound.localizedDescription
-                    : PDFImportError.allTransactionsDuplicate.localizedDescription
+            if preview.transactions.isEmpty {
+                errorMessage = PDFImportError.noTransactionsFound.localizedDescription
                 return
             }
             importPreview = deduplicatedPreview
@@ -179,10 +178,8 @@ final class BookDetailViewModel: ObservableObject {
         do {
             let preview = try LegacyXLSStatementImportService.parseStatement(from: url)
             let deduplicatedPreview = removeDuplicateImports(from: preview)
-            guard deduplicatedPreview.transactions.isEmpty == false else {
-                errorMessage = preview.transactions.isEmpty
-                    ? PDFImportError.noTransactionsFound.localizedDescription
-                    : PDFImportError.allTransactionsDuplicate.localizedDescription
+            if preview.transactions.isEmpty {
+                errorMessage = PDFImportError.noTransactionsFound.localizedDescription
                 return
             }
             importPreview = deduplicatedPreview
@@ -197,16 +194,46 @@ final class BookDetailViewModel: ObservableObject {
         let importedCategory = FinanceCatalogService.findOrCreateCategory(named: "Bank Statement", for: book, in: context)
         let importedPaymentMode = FinanceCatalogService.findOrCreatePaymentMode(named: "Bank", for: book, in: context)
         let now = Date()
+        let fallbackSortedImportItems = importPreview.transactions
+            .sorted { lhs, rhs in
+                if lhs.occurredAt == rhs.occurredAt {
+                    return lhs.sequence < rhs.sequence
+                }
+                return lhs.occurredAt < rhs.occurredAt
+            }
+        let sortedImportItems = orderedImportedTransactionsForCalculation(
+            fallbackSortedImportItems,
+            openingBalance: importPreview.openingBalance
+        )
         let existingTitleCounts = Dictionary(grouping: book.transactionArray.map { normalizedImportTitle($0.title ?? "") }, by: { $0 })
             .mapValues(\.count)
-        let incomingTitleCounts = Dictionary(grouping: importPreview.transactions.map { normalizedImportTitle($0.description) }, by: { $0 })
+        let incomingTitleCounts = Dictionary(grouping: sortedImportItems.map { normalizedImportTitle($0.description) }, by: { $0 })
             .mapValues(\.count)
 
-        for item in importPreview.transactions {
+        if book.transactionArray.isEmpty,
+           let openingBalance = importPreview.openingBalance,
+           abs(openingBalance) > 0.0001 {
+            let openingEntry = TransactionEntry(context: context)
+            openingEntry.id = UUID()
+            openingEntry.createdAt = now.addingTimeInterval(-1)
+            openingEntry.updatedAt = now.addingTimeInterval(-1)
+            openingEntry.book = book
+            openingEntry.title = "Opening Balance"
+            openingEntry.amount = abs(openingBalance)
+            openingEntry.transactionKind = openingBalance >= 0 ? .cashIn : .cashOut
+            openingEntry.occurredAt = (sortedImportItems.first?.occurredAt ?? .now).addingTimeInterval(-1)
+            openingEntry.editorName = book.ownerName
+            openingEntry.notes = "Imported opening balance from \(importPreview.sourceURL.lastPathComponent)"
+            openingEntry.category = importedCategory
+            openingEntry.paymentMode = importedPaymentMode
+            createImportLog(for: openingEntry, in: context)
+        }
+
+        for (index, item) in sortedImportItems.enumerated() {
             let entry = TransactionEntry(context: context)
             entry.id = UUID()
-            entry.createdAt = now
-            entry.updatedAt = now
+            entry.createdAt = now.addingTimeInterval(TimeInterval(index))
+            entry.updatedAt = now.addingTimeInterval(TimeInterval(index))
             entry.book = book
             let normalizedDescription = normalizedImportTitle(item.description)
             let normalizedReference = normalizedImportTitle(item.externalReference ?? "")
@@ -231,7 +258,7 @@ final class BookDetailViewModel: ObservableObject {
             entry.transactionKind = item.transactionKind
             entry.occurredAt = item.occurredAt
             entry.editorName = book.ownerName
-            var notes = "Imported from \(importPreview.sourceURL.lastPathComponent)\nStatement Balance: \(AppFormatters.currencyString(for: item.balance))"
+            var notes = "Imported from \(importPreview.sourceURL.lastPathComponent)\nStatement Sequence: \(item.sequence)\nStatement Balance: \(AppFormatters.currencyString(for: item.balance))"
             if let externalReference = item.externalReference, externalReference.isEmpty == false {
                 notes += "\nReference Code: \(externalReference)"
             }
@@ -264,7 +291,7 @@ final class BookDetailViewModel: ObservableObject {
                         title: $0.title ?? "Untitled Entry",
                         subtitle: "\($0.editorName ?? "You") • \($0.category?.wrappedName ?? "-") • \($0.paymentMode?.wrappedName ?? "-") • \(AppFormatters.bookDate.string(from: $0.occurredAt ?? .now))",
                         amount: $0.signedAmount,
-                        balance: $0.runningBalance
+                        balance: $0.displayBalance
                     )
                 },
                 totalCashIn: totalCashIn,
@@ -344,16 +371,112 @@ final class BookDetailViewModel: ObservableObject {
         log.details = "Transaction imported from statement file."
     }
 
+    private func orderedEntriesForDisplay(_ entries: [TransactionEntry]) -> [TransactionEntry] {
+        let fallback = entries.sorted {
+            if $0.occurredAt == $1.occurredAt {
+                if $0.createdAt == $1.createdAt {
+                    return $0.objectID.uriRepresentation().absoluteString > $1.objectID.uriRepresentation().absoluteString
+                }
+                return ($0.createdAt ?? .distantPast) > ($1.createdAt ?? .distantPast)
+            }
+            return ($0.occurredAt ?? .distantPast) > ($1.occurredAt ?? .distantPast)
+        }
+
+        let importedEntries = entries.filter { $0.importedStatementBalance != nil }
+        guard importedEntries.count >= 2 else { return fallback }
+
+        if let inferredOrder = inferStatementSequence(entries) {
+            return inferredOrder
+        }
+
+        return fallback
+    }
+
+    private func inferStatementSequence(_ entries: [TransactionEntry]) -> [TransactionEntry]? {
+        let importedEntries = entries.filter { $0.importedStatementBalance != nil }
+        guard importedEntries.count >= 2 else { return nil }
+
+        let ids = importedEntries.map { $0.objectID.uriRepresentation().absoluteString }
+        var predecessorByID: [String: String] = [:]
+        var successorByID: [String: String] = [:]
+
+        for candidate in importedEntries {
+            let candidateID = candidate.objectID.uriRepresentation().absoluteString
+            let candidatePreviousBalance = candidate.displayBalance - candidate.signedAmount
+
+            let matches = importedEntries.filter { other in
+                let otherID = other.objectID.uriRepresentation().absoluteString
+                guard otherID != candidateID else { return false }
+                return amountsApproximatelyEqual(other.displayBalance, candidatePreviousBalance)
+            }
+
+            guard matches.count == 1 else { continue }
+
+            let predecessor = matches[0]
+            let predecessorID = predecessor.objectID.uriRepresentation().absoluteString
+            predecessorByID[candidateID] = predecessorID
+            successorByID[predecessorID] = candidateID
+        }
+
+        let entryByID = Dictionary(uniqueKeysWithValues: importedEntries.map { ($0.objectID.uriRepresentation().absoluteString, $0) })
+        let chainStarts = ids.filter { predecessorByID[$0] == nil }
+        guard chainStarts.isEmpty == false else { return nil }
+
+        var orderedAscending: [TransactionEntry] = []
+        var visited = Set<String>()
+
+        for startID in chainStarts {
+            var currentID: String? = startID
+            while let unwrappedID = currentID, visited.contains(unwrappedID) == false {
+                visited.insert(unwrappedID)
+                if let entry = entryByID[unwrappedID] {
+                    orderedAscending.append(entry)
+                }
+                currentID = successorByID[unwrappedID]
+            }
+        }
+
+        let remaining = importedEntries.filter { visited.contains($0.objectID.uriRepresentation().absoluteString) == false }
+        let fallbackRemaining = remaining.sorted {
+            if $0.createdAt == $1.createdAt {
+                return $0.objectID.uriRepresentation().absoluteString < $1.objectID.uriRepresentation().absoluteString
+            }
+            return ($0.createdAt ?? .distantPast) < ($1.createdAt ?? .distantPast)
+        }
+        orderedAscending.append(contentsOf: fallbackRemaining)
+
+        guard orderedAscending.isEmpty == false else { return nil }
+
+        let orderedDescendingImported = Array(orderedAscending.reversed())
+        let nonImported = entries.filter { $0.importedStatementBalance == nil }.sorted {
+            if $0.occurredAt == $1.occurredAt {
+                if $0.createdAt == $1.createdAt {
+                    return $0.objectID.uriRepresentation().absoluteString > $1.objectID.uriRepresentation().absoluteString
+                }
+                return ($0.createdAt ?? .distantPast) > ($1.createdAt ?? .distantPast)
+            }
+            return ($0.occurredAt ?? .distantPast) > ($1.occurredAt ?? .distantPast)
+        }
+
+        return orderedDescendingImported + nonImported
+    }
+
+    private func amountsApproximatelyEqual(_ lhs: Double, _ rhs: Double) -> Bool {
+        abs(lhs - rhs) < 0.01
+    }
+
     private func removeDuplicateImports(from preview: StatementImportPreview) -> StatementImportPreview {
         let existingSignatures = Set(book.transactionArray.map(transactionSignature(for:)))
         var seenImportSignatures = Set<String>()
         var uniqueTransactions: [ImportedStatementTransaction] = []
+        var duplicateTransactions: [ImportedStatementTransaction] = []
         var duplicateCount = 0
 
         for item in preview.transactions {
             let signature = importSignature(for: item)
             if existingSignatures.contains(signature) || seenImportSignatures.contains(signature) {
                 duplicateCount += 1
+                duplicateTransactions.append(item)
                 continue
             }
 
@@ -365,8 +488,87 @@ final class BookDetailViewModel: ObservableObject {
             sourceURL: preview.sourceURL,
             transactions: uniqueTransactions,
             ignoredLineCount: preview.ignoredLineCount,
-            duplicateLineCount: duplicateCount
+            duplicateLineCount: duplicateCount,
+            duplicateTransactions: duplicateTransactions,
+            openingBalance: preview.openingBalance,
+            closingBalance: preview.closingBalance
         )
+    }
+
+    private func orderedImportedTransactionsForCalculation(
+        _ items: [ImportedStatementTransaction],
+        openingBalance: Double?
+    ) -> [ImportedStatementTransaction] {
+        guard items.count >= 2 else { return items }
+
+        let indexedItems = Array(items.enumerated())
+        let idByIndex = Dictionary(uniqueKeysWithValues: indexedItems.map { ($0.offset, "item-\($0.offset)") })
+        let itemByID = Dictionary(uniqueKeysWithValues: indexedItems.map { ("item-\($0.offset)", $0.element) })
+
+        var predecessorByID: [String: String] = [:]
+        var successorByID: [String: String] = [:]
+        var openingStarts = Set<String>()
+
+        for (index, item) in indexedItems {
+            let itemID = idByIndex[index] ?? "item-\(index)"
+            let expectedPreviousBalance = item.balance - item.transactionKind.amountPrefixValue * item.transactionAmount
+
+            if let openingBalance, amountsApproximatelyEqual(openingBalance, expectedPreviousBalance) {
+                openingStarts.insert(itemID)
+            }
+
+            let matches = indexedItems.filter { otherIndex, otherItem in
+                guard otherIndex != index else { return false }
+                return amountsApproximatelyEqual(otherItem.balance, expectedPreviousBalance)
+            }
+
+            guard matches.count == 1 else { continue }
+
+            let predecessorID = idByIndex[matches[0].offset] ?? "item-\(matches[0].offset)"
+            predecessorByID[itemID] = predecessorID
+            successorByID[predecessorID] = itemID
+        }
+
+        let allIDs = indexedItems.map { idByIndex[$0.offset] ?? "item-\($0.offset)" }
+        let startIDs = allIDs.filter { predecessorByID[$0] == nil }
+        let preferredStarts = startIDs.sorted { lhs, rhs in
+            let lhsOpening = openingStarts.contains(lhs)
+            let rhsOpening = openingStarts.contains(rhs)
+            if lhsOpening != rhsOpening {
+                return lhsOpening && !rhsOpening
+            }
+
+            guard let lhsItem = itemByID[lhs], let rhsItem = itemByID[rhs] else { return lhs < rhs }
+            if lhsItem.occurredAt == rhsItem.occurredAt {
+                return lhsItem.sequence < rhsItem.sequence
+            }
+            return lhsItem.occurredAt < rhsItem.occurredAt
+        }
+
+        var ordered: [ImportedStatementTransaction] = []
+        var visited = Set<String>()
+
+        for startID in preferredStarts {
+            var currentID: String? = startID
+            while let unwrappedID = currentID, visited.contains(unwrappedID) == false {
+                visited.insert(unwrappedID)
+                if let item = itemByID[unwrappedID] {
+                    ordered.append(item)
+                }
+                currentID = successorByID[unwrappedID]
+            }
+        }
+
+        let remaining = allIDs.filter { visited.contains($0) == false }.compactMap { itemByID[$0] }
+        let fallbackRemaining = remaining.sorted {
+            if $0.occurredAt == $1.occurredAt {
+                return $0.sequence < $1.sequence
+            }
+            return $0.occurredAt < $1.occurredAt
+        }
+        ordered.append(contentsOf: fallbackRemaining)
+
+        return ordered
     }
 
     private func transactionSignature(for transaction: TransactionEntry) -> String {
@@ -374,19 +576,19 @@ final class BookDetailViewModel: ObservableObject {
         let externalReference = importedReferenceCode(for: transaction) ?? "no-reference"
         let title = normalizedStoredImportTitle(transaction.title ?? "", externalReference: importedReferenceCode(for: transaction))
         let balance = importedStatementBalance(for: transaction)
-        return "\(date)|\(transaction.transactionKind.rawValue)|\(normalizedAmount(transaction.amount))|\(title)|\(balance.map(normalizedAmount) ?? "no-balance")|\(externalReference)"
+        let sequence = importedStatementSequence(for: transaction).map(String.init) ?? "no-sequence"
+        return "\(date)|\(transaction.transactionKind.rawValue)|\(normalizedAmount(transaction.amount))|\(title)|\(balance.map(normalizedAmount) ?? "no-balance")|\(externalReference)|\(sequence)"
     }
 
     private func importSignature(for transaction: ImportedStatementTransaction) -> String {
         let date = normalizedImportDate(transaction.occurredAt)
         let title = normalizedImportTitle(transaction.description)
         let externalReference = transaction.externalReference ?? "no-reference"
-        return "\(date)|\(transaction.transactionKind.rawValue)|\(normalizedAmount(transaction.transactionAmount))|\(title)|\(normalizedAmount(transaction.balance))|\(externalReference)"
+        return "\(date)|\(transaction.transactionKind.rawValue)|\(normalizedAmount(transaction.transactionAmount))|\(title)|\(normalizedAmount(transaction.balance))|\(externalReference)|\(transaction.sequence)"
     }
 
     private func normalizedImportDate(_ date: Date) -> String {
-        let startOfDay = Calendar.current.startOfDay(for: date)
-        return ISO8601DateFormatter().string(from: startOfDay)
+        return importDateFormatter.string(from: date)
     }
 
     private func normalizedImportTitle(_ title: String) -> String {
@@ -438,5 +640,33 @@ final class BookDetailViewModel: ObservableObject {
             .components(separatedBy: .newlines)
             .first ?? ""
         return rawValue.isEmpty ? nil : rawValue
+    }
+
+    private func importedStatementSequence(for transaction: TransactionEntry) -> Int? {
+        guard let notes = transaction.notes else { return nil }
+        guard let range = notes.range(of: "Statement Sequence:", options: .caseInsensitive) else { return nil }
+        let rawValue = notes[range.upperBound...]
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .components(separatedBy: .newlines)
+            .first ?? ""
+        return Int(rawValue)
+    }
+
+    private var importDateFormatter: ISO8601DateFormatter {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        formatter.timeZone = .current
+        return formatter
+    }
+}
+
+private extension TransactionKind {
+    var amountPrefixValue: Double {
+        switch self {
+        case .cashIn:
+            return 1
+        case .cashOut:
+            return -1
+        }
     }
 }

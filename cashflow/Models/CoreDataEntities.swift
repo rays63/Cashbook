@@ -17,6 +17,9 @@ extension BookEntity {
     var transactionArray: [TransactionEntry] {
         ((transactions as? Set<TransactionEntry>) ?? []).sorted {
             if $0.occurredAt == $1.occurredAt {
+                if $0.createdAt == $1.createdAt {
+                    return $0.objectID.uriRepresentation().absoluteString < $1.objectID.uriRepresentation().absoluteString
+                }
                 return ($0.createdAt ?? .distantPast) < ($1.createdAt ?? .distantPast)
             }
             return ($0.occurredAt ?? .distantPast) < ($1.occurredAt ?? .distantPast)
@@ -67,6 +70,27 @@ extension TransactionEntry {
 
     var signedAmount: Double {
         transactionKind == .cashIn ? amount : -amount
+    }
+
+    var importedStatementBalance: Double? {
+        guard let notes else { return nil }
+        guard let range = notes.range(of: "Statement Balance:", options: .caseInsensitive) else { return nil }
+
+        let rawValue = notes[range.upperBound...]
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .components(separatedBy: .newlines)
+            .first ?? ""
+
+        let cleaned = rawValue
+            .replacingOccurrences(of: ",", with: "")
+            .replacingOccurrences(of: AppFormatters.currency.currencySymbol ?? "", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        return Double(cleaned)
+    }
+
+    var displayBalance: Double {
+        importedStatementBalance ?? runningBalance
     }
 }
 

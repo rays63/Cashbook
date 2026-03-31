@@ -24,7 +24,7 @@ struct SummaryCardView: View {
             }
 
             HStack(alignment: .top, spacing: 16) {
-                metric(title: "Net Balance", value: balance, tint: balance >= 0 ? .green : .red)
+                metric(title: "Remaining Balance", value: balance, tint: balance >= 0 ? .green : .red)
                 metric(title: "Cash In", value: cashIn, tint: .green)
                 metric(title: "Cash Out", value: cashOut, tint: .red)
             }

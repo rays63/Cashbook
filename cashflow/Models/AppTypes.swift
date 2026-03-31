@@ -130,6 +130,7 @@ enum CatalogKind {
 
 struct ImportedStatementTransaction: Identifiable {
     let id = UUID()
+    let sequence: Int
     let occurredAt: Date
     let description: String
     let withdrawAmount: Double
@@ -151,6 +152,9 @@ struct StatementImportPreview {
     let transactions: [ImportedStatementTransaction]
     let ignoredLineCount: Int
     let duplicateLineCount: Int
+    let duplicateTransactions: [ImportedStatementTransaction]
+    let openingBalance: Double?
+    let closingBalance: Double?
 }
 
 enum AppTab: String, CaseIterable, Identifiable {

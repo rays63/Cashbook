@@ -6,6 +6,7 @@ struct TransactionFormView: View {
     @State private var draft: TransactionDraft
     @State private var isShowingCategoryManager = false
     @State private var isShowingPaymentModeManager = false
+    @State private var inlineErrorMessage: String?
 
     let title: String
     let goalOptions: [String]
@@ -30,6 +31,20 @@ struct TransactionFormView: View {
                 AppBackgroundView()
 
                 Form {
+                    if let inlineErrorMessage {
+                        Section {
+                            HStack(alignment: .top, spacing: 12) {
+                                Image(systemName: "exclamationmark.circle.fill")
+                                    .foregroundStyle(.red)
+                                Text(inlineErrorMessage)
+                                    .font(.subheadline.weight(.medium))
+                                    .foregroundStyle(AppTheme.primaryText)
+                            }
+                            .padding(.vertical, 6)
+                        }
+                        .listRowBackground(AppTheme.listRowFill)
+                    }
+
                     Section("Type") {
                         Picker("Entry Type", selection: $draft.type) {
                             ForEach(TransactionKind.allCases) { kind in
@@ -43,7 +58,9 @@ struct TransactionFormView: View {
                     Section("Transaction") {
                         TextField("Amount", text: $draft.amountText)
                             .keyboardType(.decimalPad)
+                            .onChange(of: draft.amountText) { _, _ in clearInlineError() }
                         TextField("Title", text: $draft.title)
+                            .onChange(of: draft.title) { _, _ in clearInlineError() }
                         Picker("Category", selection: categorySelectionBinding) {
                             Text("Select Category").tag(emptyCategoryTag)
                             ForEach(book.categoriesArray.map(\.wrappedName), id: \.self) { name in
@@ -93,6 +110,7 @@ struct TransactionFormView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
+                        guard validateDraft() == nil else { return }
                         if onSave(draft) {
                             dismiss()
                         }
@@ -116,6 +134,7 @@ struct TransactionFormView: View {
         Binding(
             get: { draft.categoryName.isEmpty ? emptyCategoryTag : draft.categoryName },
             set: { selected in
+                clearInlineError()
                 if selected == editCategoryTag {
                     isShowingCategoryManager = true
                 } else if selected == emptyCategoryTag {
@@ -133,6 +152,7 @@ struct TransactionFormView: View {
         Binding(
             get: { draft.paymentModeName.isEmpty ? emptyPaymentTag : draft.paymentModeName },
             set: { selected in
+                clearInlineError()
                 if selected == editPaymentTag {
                     isShowingPaymentModeManager = true
                 } else if selected == emptyPaymentTag {
@@ -148,8 +168,35 @@ struct TransactionFormView: View {
         Binding(
             get: { draft.goalName.isEmpty ? emptyGoalTag : draft.goalName },
             set: { selected in
+                clearInlineError()
                 draft.goalName = selected == emptyGoalTag ? "" : selected
             }
         )
+    }
+
+    private func validateDraft() -> String? {
+        let trimmedTitle = draft.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedCategory = draft.categoryName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedPaymentMode = draft.paymentModeName.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if draft.amountValue == nil || (draft.amountValue ?? 0) <= 0 {
+            inlineErrorMessage = "Enter a valid amount greater than zero."
+        } else if trimmedTitle.isEmpty {
+            inlineErrorMessage = "Title is required."
+        } else if trimmedCategory.isEmpty {
+            inlineErrorMessage = "Category is required."
+        } else if trimmedPaymentMode.isEmpty {
+            inlineErrorMessage = "Payment mode is required."
+        } else {
+            inlineErrorMessage = nil
+        }
+
+        return inlineErrorMessage
+    }
+
+    private func clearInlineError() {
+        if inlineErrorMessage != nil {
+            inlineErrorMessage = nil
+        }
     }
 }

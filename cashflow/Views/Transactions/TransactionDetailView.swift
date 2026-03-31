@@ -35,7 +35,10 @@ struct TransactionDetailView: View {
                             detailRow("Goal", goalName)
                         }
                         detailRow("Date", AppFormatters.bookDate.string(from: transaction.occurredAt ?? .now))
-                        detailRow("Balance After Entry", AppFormatters.currencyString(for: transaction.runningBalance))
+                        detailRow(
+                            transaction.importedStatementBalance != nil ? "Statement Balance" : "Balance After Entry",
+                            AppFormatters.currencyString(for: transaction.displayBalance)
+                        )
                         detailRow("Entry By", transaction.editorName ?? "You")
                         if let notes = transaction.notes, notes.isEmpty == false {
                             detailRow("Notes", notes)

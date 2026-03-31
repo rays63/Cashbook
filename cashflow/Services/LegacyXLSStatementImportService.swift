@@ -10,10 +10,10 @@ enum LegacyXLSStatementImportService {
         var transactions: [ImportedStatementTransaction] = []
         var ignoredLineCount = 0
 
-        for row in dataRows {
+        for (index, row) in dataRows.enumerated() {
             if isSummaryRow(row) { continue }
 
-            guard let transaction = parseTransaction(from: row) else {
+            guard let transaction = parseTransaction(from: row, sequence: index) else {
                 if row.contains(where: { $0.isEmpty == false }) {
                     ignoredLineCount += 1
                 }
@@ -27,7 +27,10 @@ enum LegacyXLSStatementImportService {
             sourceURL: url,
             transactions: transactions,
             ignoredLineCount: ignoredLineCount,
-            duplicateLineCount: 0
+            duplicateLineCount: 0,
+            duplicateTransactions: [],
+            openingBalance: nil,
+            closingBalance: nil
         )
     }
 
@@ -94,7 +97,7 @@ enum LegacyXLSStatementImportService {
             firstValue == "canceled"
     }
 
-    private static func parseTransaction(from row: [String]) -> ImportedStatementTransaction? {
+    private static func parseTransaction(from row: [String], sequence: Int) -> ImportedStatementTransaction? {
         guard row.count >= 7 else { return nil }
 
         let referenceCode = row[0].trimmingCharacters(in: .whitespacesAndNewlines)
@@ -115,6 +118,7 @@ enum LegacyXLSStatementImportService {
         let normalizedDescription = description.isEmpty ? "Statement Entry" : description
 
         return ImportedStatementTransaction(
+            sequence: sequence,
             occurredAt: occurredAt,
             description: normalizedDescription,
             withdrawAmount: hasWithdraw ? (withdraw ?? 0) : 0,

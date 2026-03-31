@@ -40,6 +40,26 @@ enum AppTheme {
             ? UIColor(red: 0.10, green: 0.25, blue: 0.22, alpha: 1)
             : UIColor(red: 0.83, green: 0.92, blue: 0.88, alpha: 1)
     })
+    static let surfaceElevated = Color(uiColor: UIColor { trait in
+        trait.userInterfaceStyle == .dark
+            ? UIColor(red: 0.11, green: 0.16, blue: 0.15, alpha: 0.92)
+            : UIColor(red: 0.98, green: 0.99, blue: 0.98, alpha: 0.96)
+    })
+    static let filterFill = Color(uiColor: UIColor { trait in
+        trait.userInterfaceStyle == .dark
+            ? UIColor(red: 0.13, green: 0.18, blue: 0.17, alpha: 0.96)
+            : UIColor(red: 0.96, green: 0.98, blue: 0.96, alpha: 0.96)
+    })
+    static let filterStroke = Color(uiColor: UIColor { trait in
+        trait.userInterfaceStyle == .dark
+            ? UIColor.white.withAlphaComponent(0.08)
+            : UIColor(red: 0.86, green: 0.90, blue: 0.87, alpha: 1)
+    })
+    static let mutedFill = Color(uiColor: UIColor { trait in
+        trait.userInterfaceStyle == .dark
+            ? UIColor.white.withAlphaComponent(0.06)
+            : UIColor(red: 0.93, green: 0.95, blue: 0.94, alpha: 1)
+    })
     static let shadow = Color.black.opacity(0.10)
     static let listRowFill = Color(uiColor: UIColor { trait in
         trait.userInterfaceStyle == .dark

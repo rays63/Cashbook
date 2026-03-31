@@ -43,7 +43,9 @@ enum DateRangePreset: String, CaseIterable, Identifiable {
     case all = "All Dates"
     case today = "Today"
     case last7Days = "Last 7 Days"
+    case last3Months = "Last 3 Months"
     case thisMonth = "This Month"
+    case custom = "Custom Range"
 
     var id: String { rawValue }
 }
@@ -62,6 +64,8 @@ enum ExportField: String, CaseIterable, Identifiable {
 
 struct TransactionFilterState {
     var datePreset: DateRangePreset = .all
+    var customStartDate: Date?
+    var customEndDate: Date?
     var kind: TransactionKind?
     var categoryName: String = "All"
     var paymentModeName: String = "All"
